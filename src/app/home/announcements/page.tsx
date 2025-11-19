@@ -3,46 +3,17 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PostCard, PostProps } from '@/components/post-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from '@/components/ui/input';
-import { Search, XCircle } from 'lucide-react';
+import { XCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 
 const allAnnouncements: PostProps[] = [
-  {
-    id: '1',
-    author: { name: 'Oficina Central de Admisión', username: '@admisionunsch', avatarId: 'admision-avatar' },
-    time: 'ayer',
-    content: 'Se comunica a los postulantes que el Examen de Admisión 2024-II se llevará a cabo el día 15 de Agosto. Consultar la guía del postulante en nuestra página web oficial.',
-    isOfficial: true,
-    stats: { likes: 350, comments: 45, reposts: 120 },
-    category: 'admision',
-  },
-  {
-    id: '2',
-    author: { name: 'Rectorado UNSCH', username: '@rectorado', avatarId: 'rector-avatar' },
-    time: 'hace 2 días',
-    content: '¡Feliz 347° Aniversario, Universidad Nacional de San Cristóbal de Huamanga! Un día para celebrar nuestra historia y mirar hacia el futuro con esperanza y compromiso.',
-    imageId: 'aniversary-banner',
-    imageAlt: 'University anniversary banner',
-    isOfficial: true,
-    stats: { likes: 890, comments: 110, reposts: 250 },
-    category: 'rectorado',
-  },
-  {
-    id: '3',
-    author: { name: 'Facultad de Ingeniería', username: '@fiamg', avatarId: 'fiamg-avatar' },
-    time: 'hace 3 días',
-    content: 'La próxima semana se realizarán las elecciones para el centro de estudiantes de la facultad. Invitamos a todos a participar de este importante proceso democrático.',
-    isOfficial: true,
-    stats: { likes: 95, comments: 12, reposts: 22 },
-    category: 'facultad',
-  },
+  // Data removed as requested
 ];
 
 export default function AnnouncementsPage() {
     const searchParams = useSearchParams();
-    const [filteredAnnouncements, setFilteredAnnouncements] = useState<PostProps[]>(allAnnouncements);
+    const [filteredAnnouncements, setFilteredAnnouncements] = useState<PostProps[]>([]);
     const [category, setCategory] = useState('all');
 
     useEffect(() => {

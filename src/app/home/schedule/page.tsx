@@ -4,17 +4,11 @@ import { PlusCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const scheduleData = {
-  lunes: [{ time: '08:00 - 10:00', course: 'Cálculo III', room: 'A-201', type: 'class' }],
-  martes: [
-    { time: '10:00 - 12:00', course: 'Programación Avanzada', room: 'Lab-C4', type: 'class' },
-    { time: '16:00 - 18:00', course: 'Taller de Liderazgo', room: 'Auditorio', type: 'event' }
-  ],
-  miercoles: [{ time: '08:00 - 10:00', course: 'Cálculo III', room: 'A-201', type: 'class' }],
-  jueves: [
-    { time: '10:00 - 12:00', course: 'Programación Avanzada', room: 'Lab-C4', type: 'class' },
-    { time: '14:00 - 15:00', course: 'Exposición: Fisica II', room: 'B-105', type: 'task' }
-  ],
-  viernes: [{ time: '11:00 - 13:00', course: 'Estadística Aplicada', room: 'C-303', type: 'class' }],
+  lunes: [],
+  martes: [],
+  miercoles: [],
+  jueves: [],
+  viernes: [],
   sabado: [],
   domingo: [],
 };
@@ -36,7 +30,7 @@ const DayColumn = ({ day, items }: { day: string, items: ScheduleItem[] }) => {
     }
     return (
         <div className="flex-1 min-w-[220px] sm:min-w-[250px]">
-            <h3 className="font-headline text-lg font-semibold text-center py-3 border-b">{day}</h3>
+            <h3 className="font-headline text-lg font-semibold text-center py-3 border-b capitalize">{day}</h3>
             <div className="p-2 space-y-2 h-full">
                 {items.length > 0 ? items.map((item, index) => (
                     <div key={index} className="p-3 rounded-lg border bg-card/50">
@@ -70,17 +64,12 @@ export default function SchedulePage() {
         <Card>
             <CardContent className="p-0">
                 <div className="flex overflow-x-auto">
-                    <DayColumn day="Lunes" items={scheduleData.lunes} />
-                    <div className="border-l" />
-                    <DayColumn day="Martes" items={scheduleData.martes} />
-                    <div className="border-l" />
-                    <DayColumn day="Miércoles" items={scheduleData.miercoles} />
-                    <div className="border-l" />
-                    <DayColumn day="Jueves" items={scheduleData.jueves} />
-                    <div className="border-l" />
-                    <DayColumn day="Viernes" items={scheduleData.viernes} />
-                    <div className="border-l" />
-                    <DayColumn day="Sábado" items={scheduleData.sabado} />
+                    {Object.entries(scheduleData).map(([day, items]) => (
+                      <React.Fragment key={day}>
+                        <DayColumn day={day} items={items as ScheduleItem[]} />
+                        {day !== 'domingo' && <div className="border-l" />}
+                      </React.Fragment>
+                    ))}
                 </div>
             </CardContent>
         </Card>

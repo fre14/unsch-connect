@@ -4,38 +4,25 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Mail, Link as LinkIcon, CalendarDays } from "lucide-react";
+import { Edit, Mail, Link as LinkIcon, CalendarDays, XCircle } from "lucide-react";
 import Link from 'next/link';
 import { getImageUrl } from '@/lib/placeholder-images';
 
 const userPosts: PostProps[] = [
-    {
-      author: { name: 'Estudiante Ejemplar', username: '@estudiante_ejemplar', avatarId: 'user-avatar-main' },
-      time: 'hace 1 día',
-      content: '¡Qué gran día en el campus! El sol brilla y la energía es increíble. #VidaUniversitaria',
-      imageId: 'campus-image',
-      imageAlt: 'Sunny day on campus',
-      stats: { likes: 102, comments: 15, reposts: 7 },
-    }
+    // Data removed as requested
 ];
 
 const reposts: PostProps[] = [
-    {
-      author: { name: 'Rectorado UNSCH', username: '@rectorado', avatarId: 'rector-avatar' },
-      time: 'hace 2 días',
-      content: '¡Feliz 347° Aniversario, Universidad Nacional de San Cristóbal de Huamanga! Un día para celebrar nuestra historia y mirar hacia el futuro con esperanza y compromiso.',
-      imageId: 'aniversary-banner',
-      imageAlt: 'University anniversary banner',
-      isOfficial: true,
-      stats: { likes: 890, comments: 110, reposts: 250 },
-    }
+    // Data removed as requested
 ]
 
 export default function ProfilePage() {
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             <Card className="overflow-hidden shadow-md">
-                <div className="h-36 md:h-48 bg-gradient-to-r from-primary/80 to-accent/70" />
+                <div className="relative w-full h-36 md:h-48">
+                    <Image src={getImageUrl('aniversary-banner')} alt="Profile Banner" fill className="object-cover" />
+                </div>
                 <CardContent className="p-4 sm:p-6">
                     <div className="flex items-end gap-4 -mt-16 sm:-mt-20">
                         <Avatar className="h-28 w-28 sm:h-32 sm:w-32 border-4 border-background ring-2 ring-primary/50">
@@ -76,16 +63,28 @@ export default function ProfilePage() {
                 </TabsList>
                 <TabsContent value="posts">
                     <div className="space-y-6 mt-6">
-                        {userPosts.map((post, index) => (
+                        {userPosts.length > 0 ? userPosts.map((post, index) => (
                             <PostCard key={index} {...post} />
-                        ))}
+                        )) : (
+                            <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card">
+                                <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                                <h3 className="mt-4 text-xl font-semibold text-foreground">Sin publicaciones</h3>
+                                <p className="mt-2">Este usuario aún no ha publicado nada.</p>
+                            </Card>
+                        )}
                     </div>
                 </TabsContent>
                 <TabsContent value="reposts">
                     <div className="space-y-6 mt-6">
-                        {reposts.map((post, index) => (
+                        {reposts.length > 0 ? reposts.map((post, index) => (
                             <PostCard key={index} {...post} />
-                        ))}
+                        )) : (
+                             <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card">
+                                <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                                <h3 className="mt-4 text-xl font-semibold text-foreground">Sin reposts</h3>
+                                <p className="mt-2">Este usuario aún no ha compartido ninguna publicación.</p>
+                            </Card>
+                        )}
                     </div>
                 </TabsContent>
             </Tabs>
