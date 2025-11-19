@@ -1,37 +1,41 @@
+
 "use client";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { GraduationCap } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
-const loginSchema = z.object({
+const forgotPasswordSchema = z.object({
   email: z.string().email("Correo inválido"),
-  password: z.string().min(1, 'La contraseña es requerida.'),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   const router = useRouter();
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const { toast } = useToast();
+  const form = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
       email: '',
-      password: '',
     }
   });
   
-  function onSubmit(data: LoginFormValues) {
+  function onSubmit(data: ForgotPasswordFormValues) {
     console.log(data);
-    // On successful login, redirect
-    router.push('/home/community');
+    // Here you would typically call your backend to send a reset link
+    toast({
+      title: "Enlace enviado",
+      description: `Se ha enviado un enlace para restablecer tu contraseña a ${data.email}.`,
+    });
+    router.push('/');
   }
 
   return (
@@ -45,8 +49,8 @@ export default function LoginPage() {
                 UNSCH Connect
                 </h1>
             </div>
-            <CardTitle className="font-headline text-2xl">Bienvenido de vuelta</CardTitle>
-            <CardDescription>Ingresa a tu cuenta para continuar.</CardDescription>
+            <CardTitle className="font-headline text-2xl">Recuperar Contraseña</CardTitle>
+            <CardDescription>Ingresa tu correo para recibir un enlace de recuperación.</CardDescription>
         </CardHeader>
         <CardContent>
            <Form {...form}>
@@ -64,33 +68,15 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center justify-between">
-                        <FormLabel>Contraseña</FormLabel>
-                         <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">
-                            ¿Olvidaste tu contraseña?
-                         </Link>
-                    </div>
-                    <FormControl>
-                      <Input type="password" placeholder="********" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <Button type="submit" className="w-full !mt-6 font-semibold">
-                Iniciar Sesión
+                Enviar Enlace
               </Button>
             </form>
           </Form>
           <div className="mt-6 text-center text-sm text-muted-foreground">
-              ¿No tienes una cuenta?{' '}
-              <Link href="/signup" className="font-semibold text-primary hover:underline">
-                  Regístrate aquí
+              ¿Recuerdas tu contraseña?{' '}
+              <Link href="/" className="font-semibold text-primary hover:underline">
+                  Inicia sesión
               </Link>
           </div>
         </CardContent>
