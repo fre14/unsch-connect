@@ -1,0 +1,407 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user profile within the UNSCH Connect application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Institutional email address of the user (@unsch.edu.pe).",
+          "format": "email"
+        },
+        "studentCode": {
+          "type": "string",
+          "description": "Student code for verification purposes."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "school": {
+          "type": "string",
+          "description": "The school the user belongs to."
+        },
+        "cycle": {
+          "type": "string",
+          "description": "The current cycle the user is in."
+        },
+        "profilePicture": {
+          "type": "string",
+          "description": "URL to the user's profile picture.",
+          "format": "uri"
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description or bio of the user."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "studentCode",
+        "firstName",
+        "lastName",
+        "school",
+        "cycle"
+      ]
+    },
+    "Post": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Post",
+      "type": "object",
+      "description": "Represents a post created by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Post entity."
+        },
+        "authorId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Post)"
+        },
+        "content": {
+          "type": "string",
+          "description": "The main content of the post (text, link, etc.)."
+        },
+        "postType": {
+          "type": "string",
+          "description": "The type of the post (e.g., 'text', 'photo', 'video', 'poll')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the post was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the post was last updated.",
+          "format": "date-time"
+        },
+        "likeIds": {
+          "type": "array",
+          "description": "References to UserProfiles who liked this post. (Relationship: UserProfile N:N Post)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "commentIds": {
+          "type": "array",
+          "description": "References to Comments on this post. (Relationship: Post 1:N Comment)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "authorId",
+        "content",
+        "postType",
+        "createdAt"
+      ]
+    },
+    "Comment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Comment",
+      "type": "object",
+      "description": "Represents a comment on a post.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Comment entity."
+        },
+        "postId": {
+          "type": "string",
+          "description": "Reference to Post. (Relationship: Post 1:N Comment)"
+        },
+        "authorId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Comment)"
+        },
+        "content": {
+          "type": "string",
+          "description": "The text content of the comment."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the comment was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the comment was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "postId",
+        "authorId",
+        "content",
+        "createdAt"
+      ]
+    },
+    "Announcement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Announcement",
+      "type": "object",
+      "description": "Represents an official announcement from the university.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Announcement entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the announcement."
+        },
+        "content": {
+          "type": "string",
+          "description": "The main content of the announcement."
+        },
+        "publisherId": {
+          "type": "string",
+          "description": "Reference to UserProfile who published the announcement. (Relationship: UserProfile 1:N Announcement)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the announcement was created.",
+          "format": "date-time"
+        },
+        "faculty": {
+          "type": "string",
+          "description": "The faculty the announcement belongs to."
+        },
+        "school": {
+          "type": "string",
+          "description": "The school the announcement belongs to."
+        },
+        "course": {
+          "type": "string",
+          "description": "The course the announcement belongs to."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the announcement."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "content",
+        "publisherId",
+        "createdAt",
+        "faculty",
+        "school",
+        "course",
+        "category"
+      ]
+    },
+    "AcademicSchedule": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AcademicSchedule",
+      "type": "object",
+      "description": "Represents a user's academic schedule.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AcademicSchedule entity."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N AcademicSchedule)"
+        },
+        "courseName": {
+          "type": "string",
+          "description": "Name of the course."
+        },
+        "dayOfWeek": {
+          "type": "string",
+          "description": "Day of the week for the course (e.g., 'Monday')."
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Start time of the course (e.g., '08:00')."
+        },
+        "endTime": {
+          "type": "string",
+          "description": "End time of the course (e.g., '09:50')."
+        },
+        "location": {
+          "type": "string",
+          "description": "Location or classroom where the course takes place."
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "courseName",
+        "dayOfWeek",
+        "startTime",
+        "endTime",
+        "location"
+      ]
+    },
+    "PasswordResetToken": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PasswordResetToken",
+      "type": "object",
+      "description": "Represents a token used for resetting a user's password.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PasswordResetToken entity."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:1 PasswordResetToken)"
+        },
+        "token": {
+          "type": "string",
+          "description": "The password reset token."
+        },
+        "expirationTime": {
+          "type": "string",
+          "description": "Timestamp indicating when the token expires.",
+          "format": "date-time"
+        },
+        "used": {
+          "type": "boolean",
+          "description": "Indicates whether the token has been used."
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "token",
+        "expirationTime",
+        "used"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/userProfiles/{userProfileId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information. The document ID is the user's UID.  This is private data and uses path-based ownership.",
+          "params": [
+            {
+              "name": "userProfileId",
+              "description": "The unique identifier for the user profile."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/posts/{postId}",
+        "definition": {
+          "entityName": "Post",
+          "schema": {
+            "$ref": "#/backend/entities/Post"
+          },
+          "description": "Stores posts created by users.",
+          "params": [
+            {
+              "name": "postId",
+              "description": "The unique identifier for the post."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/posts/{postId}/comments/{commentId}",
+        "definition": {
+          "entityName": "Comment",
+          "schema": {
+            "$ref": "#/backend/entities/Comment"
+          },
+          "description": "Stores comments on posts. Includes the postId and authorId for authorization and data retrieval.",
+          "params": [
+            {
+              "name": "postId",
+              "description": "The unique identifier for the post."
+            },
+            {
+              "name": "commentId",
+              "description": "The unique identifier for the comment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/announcements/{announcementId}",
+        "definition": {
+          "entityName": "Announcement",
+          "schema": {
+            "$ref": "#/backend/entities/Announcement"
+          },
+          "description": "Stores official announcements from the university.  Access control can be based on faculty, school, or course, but all rules are the same for documents in the collection.",
+          "params": [
+            {
+              "name": "announcementId",
+              "description": "The unique identifier for the announcement."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/userProfiles/{userProfileId}/academicSchedules/{academicScheduleId}",
+        "definition": {
+          "entityName": "AcademicSchedule",
+          "schema": {
+            "$ref": "#/backend/entities/AcademicSchedule"
+          },
+          "description": "Stores academic schedule information for each user. Uses path-based ownership, meaning only the user can access their own schedule.",
+          "params": [
+            {
+              "name": "userProfileId",
+              "description": "The unique identifier for the user profile."
+            },
+            {
+              "name": "academicScheduleId",
+              "description": "The unique identifier for the academic schedule entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/passwordResetTokens/{tokenId}",
+        "definition": {
+          "entityName": "PasswordResetToken",
+          "schema": {
+            "$ref": "#/backend/entities/PasswordResetToken"
+          },
+          "description": "Stores password reset tokens.  The document ID is the token ID. Includes userProfileId to identify the user, token, expirationTime, and a flag to indicate if the token has been used. This collection requires special security considerations to prevent abuse.",
+          "params": [
+            {
+              "name": "tokenId",
+              "description": "The unique identifier for the password reset token."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the UNSCH Connect application's features, focusing on user profiles, posts, announcements, academic schedules, and password reset functionality. The design prioritizes security, scalability, and ease of debugging, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules Are Not Filters).\n\n**Authorization Independence:** This is achieved through denormalization. For example, if access to a post's comments were to depend on the post's author, the `authorId` is already present in the `Comment` entity. If more complex authorization were required (e.g., only members of a course can comment), the course membership information would be denormalized into each comment.\n\n**Structural Segregation:** Different data types with different access requirements are stored in separate collections. User profiles are stored in `/userProfiles/{userProfileId}`, posts are stored in `/posts/{postId}`, and announcements are stored in `/announcements/{announcementId}`. This segregation simplifies security rules.\n\n**Access Modeling:**\n*   **Private Data:** User-owned data such as academic schedules are stored under the `/userProfiles/{userProfileId}/academicSchedules/{academicScheduleId}` path, ensuring only the user has access.\n*   **Collaborative Data:** The membership map approach is not directly applicable in the current schema, but if collaborative features were added (e.g., group projects), a `members` map would be included in the corresponding entity (e.g., `/projects/{projectId}`).\n*   **Global Roles:** Administrative roles could be implemented using a collection like `/roles_admin/{uid}`.  Currently, publisherId is used to denote user with admin capabilities to create announcements.\n\n**QAPs Support:** The structure supports secure list operations by ensuring that each collection contains documents with a homogeneous security posture. Security rules can be applied at the collection level without needing to filter based on document content. For example, listing posts in the `/posts` collection only requires checking if the user has permission to view posts in general, not filtering based on the content of each post.\n\nTo support the \"Forgot Password\" functionality and ensure best security practices, a dedicated collection `/passwordResetTokens/{tokenId}` is used. To ensure the security of the password reset process, the `PasswordResetToken` entity includes an expiration time (`expirationTime`) and a flag indicating whether the token has been used (`used`)."
+  }
+}
