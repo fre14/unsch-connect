@@ -7,6 +7,7 @@ import { MessageCircle, Heart, Repeat, MoreHorizontal, Bookmark, Flag, BadgeChec
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export type PostProps = {
+  id?: string;
   author: {
     name: string;
     username: string;
@@ -22,6 +23,7 @@ export type PostProps = {
     reposts: number;
   };
   isOfficial?: boolean;
+  category?: string;
 };
 
 export function PostCard({ author, time, content, imageId, imageAlt, stats, isOfficial = false }: PostProps) {

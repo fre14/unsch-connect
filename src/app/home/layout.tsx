@@ -2,8 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Bell, CalendarDays, GraduationCap, Home, LogOut, Menu, Megaphone, MoreHorizontal, PlusSquare, Search, Settings, User, Users } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Bell, CalendarDays, GraduationCap, LogOut, Menu, Megaphone, MoreHorizontal, PlusSquare, Search, Settings, User, Users } from 'lucide-react';
 import { getImageUrl } from '@/lib/placeholder-images';
 
 import { Button } from '@/components/ui/button';
@@ -14,36 +14,58 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const navItems = [
-  { href: '/home', icon: Home, label: 'Inicio' },
-  { href: '/home/community', icon: Users, label: 'Comunidad' },
-  { href: '/home/announcements', icon: Megaphone, label: 'Anuncios' },
-  { href: '/home/schedule', icon: CalendarDays, label: 'Horario' },
-  { href: '/home/profile', icon: User, label: 'Perfil' },
+  { href: '/home/community', label: 'Comunidad' },
+  { href: '/home/announcements', label: 'Anuncios' },
+  { href: '/home/schedule', label: 'Horario' },
+  { href: '/home/profile', label: 'Perfil' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [searchTerm, setSearchTerm] = React.useState(searchParams.get('search') || '');
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const params = new URLSearchParams(searchParams);
+    if (searchTerm) {
+      params.set('search', searchTerm);
+    } else {
+      params.delete('search');
+    }
+    router.replace(`${pathname}?${params.toString()}`);
+  };
   
   const sidebarContent = (
     <div className="flex flex-col h-full bg-card text-card-foreground">
       <div className="p-4 border-b">
-        <Link href="/home" className="flex items-center gap-2">
+        <Link href="/home/community" className="flex items-center gap-2">
           <GraduationCap className="h-8 w-8 text-accent" />
           <span className="font-headline text-xl font-bold">UNCH Connect</span>
         </Link>
       </div>
       <nav className="flex-1 p-4 space-y-2">
-        {navItems.map((item) => (
-          <Link key={item.href} href={item.href}>
-            <Button
-              variant={pathname === item.href ? 'secondary' : 'ghost'}
-              className="w-full justify-start gap-3"
-            >
-              <item.icon className="h-5 w-5" />
-              {item.label}
-            </Button>
-          </Link>
-        ))}
+        {navItems.map((item) => {
+           const Icon = {
+            '/home/community': Users,
+            '/home/announcements': Megaphone,
+            '/home/schedule': CalendarDays,
+            '/home/profile': User,
+          }[item.href] || Users;
+
+          return (
+            <Link key={item.href} href={item.href}>
+              <Button
+                variant={pathname.startsWith(item.href) || (pathname === '/home' && item.href === '/home/community') ? 'secondary' : 'ghost'}
+                className="w-full justify-start gap-3"
+              >
+                <Icon className="h-5 w-5" />
+                {item.label}
+              </Button>
+            </Link>
+          )
+        })}
       </nav>
       <div className="p-4 mt-auto border-t">
         <DropdownMenu>
@@ -55,7 +77,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <AvatarFallback>U</AvatarFallback>
                 </Avatar>
                 <div className="text-left">
-                  <p className="text-sm font-medium">Estudiante</p>
+                  <p className="font-medium text-sm">Estudiante</p>
                   <p className="text-xs text-muted-foreground">c2024@unsch.edu.pe</p>
                 </div>
                 <MoreHorizontal className="ml-auto h-5 w-5" />
@@ -101,16 +123,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </SheetContent>
             </Sheet>
             <div className="w-full flex-1">
-              <form>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Buscar publicaciones, usuarios..."
-                    className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-                  />
-                </div>
-              </form>
+               {pathname === '/home/announcements' && (
+                 <form onSubmit={handleSearch}>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Buscar anuncios..."
+                      className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </form>
+               )}
             </div>
              <Tooltip>
                 <TooltipTrigger asChild>
