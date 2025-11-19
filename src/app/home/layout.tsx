@@ -55,7 +55,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
       <div className="p-4 border-b">
         <Link href="/home/community" className="flex items-center gap-2">
           <GraduationCap className="h-8 w-8 text-primary" />
-          <span className="font-headline text-xl font-bold">UNCH Connect</span>
+          <span className="font-headline text-xl font-bold">UNSCH Connect</span>
         </Link>
       </div>
       <nav className="flex-1 p-2 space-y-1">
@@ -226,5 +226,3 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </UserProvider>
   )
 }
-
-    

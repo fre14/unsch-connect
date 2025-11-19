@@ -48,7 +48,7 @@ export default function SignUpPage() {
             <div className="mb-4 flex items-center gap-3 text-primary">
                 <GraduationCap size={40} strokeWidth={1.5} />
                 <h1 className="font-headline text-4xl font-bold tracking-tighter text-foreground">
-                UNCH Connect
+                UNSCH Connect
                 </h1>
             </div>
             <CardTitle className="font-headline text-2xl">Crear una cuenta</CardTitle>

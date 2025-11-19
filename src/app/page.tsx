@@ -42,7 +42,7 @@ export default function LoginPage() {
             <div className="mb-4 flex items-center gap-3 text-primary">
                 <GraduationCap size={40} strokeWidth={2} />
                 <h1 className="font-headline text-4xl font-bold tracking-tighter text-foreground">
-                UNCH Connect
+                UNSCH Connect
                 </h1>
             </div>
             <CardTitle className="font-headline text-2xl">Bienvenido de vuelta</CardTitle>

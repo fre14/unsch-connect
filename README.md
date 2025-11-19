@@ -1,4 +1,4 @@
-# UNCH Connect
+# UNSCH Connect
 
 This is a NextJS starter in Firebase Studio.
 
