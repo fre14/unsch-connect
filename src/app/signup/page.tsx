@@ -11,6 +11,12 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth, useFirestore } from '@/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 const careers = [
     "Administración de Empresas",
@@ -72,6 +78,9 @@ type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 export default function SignUpPage() {
   const router = useRouter();
+  const auth = useAuth();
+  const firestore = useFirestore();
+  const { toast } = useToast();
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -83,10 +92,50 @@ export default function SignUpPage() {
     }
   });
   
-  function onSubmit(data: SignUpFormValues) {
-    console.log(data);
-    // On successful signup, redirect to login
-    router.push('/');
+  async function onSubmit(data: SignUpFormValues) {
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+        const user = userCredential.user;
+
+        const userProfile = {
+            id: user.uid,
+            email: data.email,
+            studentCode: data.studentCode,
+            school: data.career,
+            firstName: '', // Will be set up in profile settings
+            lastName: '', // Will be set up in profile settings
+            cycle: 'I', // Default cycle
+            profilePicture: '', // Default or placeholder
+            description: ''
+        };
+
+        const userDocRef = doc(firestore, "userProfiles", user.uid);
+        
+        setDoc(userDocRef, userProfile).catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+                path: userDocRef.path,
+                operation: 'create',
+                requestResourceData: userProfile,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
+
+        toast({
+            title: "¡Cuenta creada!",
+            description: "Tu cuenta ha sido creada exitosamente. Ahora puedes iniciar sesión.",
+        });
+        router.push('/');
+
+    } catch (error: any) {
+        console.error("Error al crear la cuenta:", error);
+        toast({
+            variant: "destructive",
+            title: "Error al registrarse",
+            description: error.code === 'auth/email-already-in-use' 
+                ? "Este correo electrónico ya está en uso."
+                : "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.",
+        });
+    }
   }
 
   return (
@@ -180,8 +229,8 @@ export default function SignUpPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full !mt-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                Registrarse
+              <Button type="submit" className="w-full !mt-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" disabled={form.formState.isSubmitting}>
+                 {form.formState.isSubmitting ? 'Registrando...' : 'Registrarse'}
               </Button>
             </form>
           </Form>

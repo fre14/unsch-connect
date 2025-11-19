@@ -1,3 +1,4 @@
+
 /**
  * @file Firestore Security Rules for UNSCH Connect Application
  *
@@ -6,7 +7,7 @@
  * Password reset tokens are carefully secured to prevent abuse.
  *
  * Data Structure:
- * - /userProfiles/{userId}: Stores individual user profiles. Access is restricted to the owning user.
+ * - /userProfiles/{userId}: Stores individual user profiles. Access is restricted to the owning user, except for creation.
  * - /posts/{postId}: Stores user-generated posts. Publicly readable, but only the author can modify or delete.
  * - /posts/{postId}/comments/{commentId}: Stores comments on posts.
  * - /announcements/{announcementId}: Stores university announcements. Publicly readable.
@@ -16,8 +17,8 @@
  * Key Security Decisions:
  * - User listing is disallowed to protect privacy.
  * - Public read access is granted to the 'announcements' collection, assuming that all documents within are safe to expose.
- * - All write operations are strictly controlled based on ownership or specific roles.
- * - Data validation is limited to fields crucial for authorization and relational integrity to allow for flexible data shapes during prototyping.
+ * - All write operations (except profile creation) are strictly controlled based on ownership.
+ * - Data validation is limited to fields crucial for authorization and relational integrity.
  *
  * Denormalization for Authorization:
  * The rules rely on denormalized data, such as the `authorId` field in the `Post` entity, to make authorization decisions without additional reads.
@@ -27,15 +28,16 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secure user profile data, allowing only the owner to read and write.
+     * @description Secure user profile data. Allows anyone to create their own profile, but only the owner can read/write afterward.
      * @path /userProfiles/{userProfileId}
-     * @allow (create, update, delete): User with UID 'user_abc' can create, update, or delete their own profile document if authenticated.
+     * @allow (create): Any user can create their own profile document if authenticated and the document ID matches their UID.
+     *   Request: auth.uid == userProfileId
+     * @allow (get, update, delete): User with UID 'user_abc' can read, update, or delete their own profile document if authenticated.
      *   Request: auth.uid == 'user_abc'
-     * @allow (get, list): User with UID 'user_abc' can read their own profile document if authenticated.
-     *   Request: auth.uid == 'user_abc'
+     * @deny (list): User listing is disabled for privacy.
      * @deny (create, update, delete): User with UID 'user_xyz' cannot modify profile of user 'user_abc'.
      *   Request: auth.uid == 'user_xyz'
-     * @principle Enforces document ownership for all operations.
+     * @principle Enforces document ownership for all operations except initial creation.
      */
     match /userProfiles/{userProfileId} {
       function isSignedIn() {
@@ -46,13 +48,20 @@ service cloud.firestore {
         return isSignedIn() && request.auth.uid == userId;
       }
 
+      function isNewOwner(userId) {
+        // The user is creating their own profile.
+        // `resource` is null because the document doesn't exist yet.
+        return isOwner(userId) && resource == null;
+      }
+      
       function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+        // The user is modifying their own existing profile.
+        return isOwner(userId) && exists(/databases/$(database)/documents/userProfiles/$(userId));
       }
 
       allow get: if isOwner(userProfileId);
       allow list: if false; // User listing is disabled for privacy.
-      allow create: if isOwner(userProfileId);
+      allow create: if isNewOwner(userProfileId);
       allow update: if isExistingOwner(userProfileId);
       allow delete: if isExistingOwner(userProfileId);
     }
