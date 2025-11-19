@@ -1,3 +1,88 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "user-avatar-main",
+      "description": "Main user avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1590086782792-42dd2350140d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM0NzE1OTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "user-avatar-1",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1521119989659-a83eee488004?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM0NzE1OTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "user-avatar-2",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1531123414780-f74242c2b052?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cGVyc29uJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYzNDcxNTk5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "user-avatar-3",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM0NzE1OTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "user-avatar-4",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM0NzE1OTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "comedor-avatar",
+      "description": "Comedor Universitario avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1593863806425-32e9e8384ce6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxmb29kJTIwbG9nb3xlbnwwfHx8fDE3NjM1NDQ4MTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "food logo"
+    },
+    {
+      "id": "admision-avatar",
+      "description": "Admision office avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1660071155921-7204712d7d1a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxvZmZpY2lhbCUyMGxvZ298ZW58MHx8fHwxNzYzNTQ0ODE0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "official logo"
+    },
+    {
+      "id": "rector-avatar",
+      "description": "Rector's office avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1709873582570-4f17d43921d4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxvZmZpY2lhbCUyMGxvZ298ZW58MHx8fHwxNzYzNTQ0ODE0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "official logo"
+    },
+    {
+      "id": "fiamg-avatar",
+      "description": "Engineering faculty avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1762012507752-6322e96f92e9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxlbmdpbmVlcmluZyUyMGxvZ298ZW58MHx8fHwxNzYzNTQ0ODE0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "engineering logo"
+    },
+    {
+      "id": "post-image-code",
+      "description": "Laptop with code",
+      "imageUrl": "https://images.unsplash.com/photo-1523800503107-5bc3ba2a6f81?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxsYXB0b3AlMjBjb2RlfGVufDB8fHx8MTc2MzUwODY0N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "laptop code"
+    },
+    {
+      "id": "post-image-sunset",
+      "description": "Sunset at university",
+      "imageUrl": "https://images.unsplash.com/photo-1744051523537-3a362c0d6c8a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzdW5zZXQlMjBjYW1wdXN8ZW58MHx8fHwxNzYzNTQ0ODE0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sunset campus"
+    },
+    {
+      "id": "aniversary-banner",
+      "description": "University anniversary banner",
+      "imageUrl": "https://images.unsplash.com/photo-1761419694379-7e871dd727ed?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjZWxlYnJhdGlvbiUyMGJhbm5lcnxlbnwwfHx8fDE3NjM1NDQ4MTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "celebration banner"
+    },
+    {
+      "id": "campus-image",
+      "description": "Sunny day on campus",
+      "imageUrl": "https://images.unsplash.com/flagged/photo-1554473675-d0904f3cbf38?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx1bml2ZXJzaXR5JTIwY2FtcHVzfGVufDB8fHx8MTc2MzQ3OTYxN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "university campus"
+    },
+    {
+      "id": "profile-pic-large",
+      "description": "Large profile picture",
+      "imageUrl": "https://images.unsplash.com/photo-1531123414780-f74242c2b052?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cGVyc29uJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYzNDcxNTk5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    }
+  ]
 }
