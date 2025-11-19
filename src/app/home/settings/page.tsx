@@ -1,3 +1,6 @@
+
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -5,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUpload } from "@/components/image-upload";
 
 export default function SettingsPage() {
     return (
@@ -16,7 +20,11 @@ export default function SettingsPage() {
                     <CardTitle>Perfil</CardTitle>
                     <CardDescription>Gestiona tu información pública.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                        <Label>Foto de Perfil</Label>
+                        <ImageUpload />
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="name">Nombre</Label>
                         <Input id="name" defaultValue="Estudiante Ejemplar" />
