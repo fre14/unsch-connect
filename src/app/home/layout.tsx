@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -15,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CreatePost } from '@/components/create-post';
 import { UserProvider, useUser } from '@/context/user-context';
+import { PostProvider } from '@/context/post-context';
 
 const navItems = [
   { href: '/home/community', label: 'Comunidad', icon: Users },
@@ -23,12 +25,19 @@ const navItems = [
   { href: '/home/profile', label: 'Perfil', icon: User },
 ];
 
+const notifications = [
+    { text: 'Admisión UNSCH ha publicado un nuevo anuncio.', time: 'hace 5 minutos', avatarId: 'admision-avatar' },
+    { text: 'A Juan Pérez le ha gustado tu publicación.', time: 'hace 1 hora', avatarId: 'user-avatar-1' },
+    { text: 'El Rectorado ha emitido un comunicado importante.', time: 'hace 3 horas', avatarId: 'rector-avatar' },
+];
+
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = React.useState(searchParams.get('search') || '');
   const { avatar } = useUser();
+  const [showNotificationDot, setShowNotificationDot] = React.useState(true);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -157,22 +166,49 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                 <CreatePost />
               </DialogContent>
             </Dialog>
+            
+            <DropdownMenu onOpenChange={(open) => !open && setShowNotificationDot(false)}>
+                <DropdownMenuTrigger asChild>
+                   <Tooltip>
+                        <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="rounded-full relative">
+                            <Bell className="h-5 w-5" />
+                            <span className="sr-only">Notificaciones</span>
+                            {showNotificationDot && (
+                                <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary/80"></span>
+                                </span>
+                            )}
+                        </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Notificaciones</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                    <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {notifications.map((notification, index) => (
+                         <DropdownMenuItem key={index} className="flex items-start gap-3 p-3">
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={getImageUrl(notification.avatarId)} />
+                                <AvatarFallback>{notification.text.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                                <p className="text-sm leading-tight whitespace-normal">{notification.text}</p>
+                                <p className="text-xs text-muted-foreground">{notification.time}</p>
+                            </div>
+                        </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                     <DropdownMenuItem className="justify-center text-sm text-primary hover:!bg-accent">
+                        Ver todas las notificaciones
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full relative">
-                  <Bell className="h-5 w-5" />
-                  <span className="sr-only">Notificaciones</span>
-                   <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary/80"></span>
-                    </span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                  <p>Notificaciones</p>
-                </TooltipContent>
-            </Tooltip>
           </header>
           <main className="flex-1 overflow-auto p-4 sm:p-6 bg-background">{children}</main>
         </div>
@@ -184,7 +220,11 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <UserProvider>
-      <AppLayoutContent>{children}</AppLayoutContent>
+        <PostProvider>
+            <AppLayoutContent>{children}</AppLayoutContent>
+        </PostProvider>
     </UserProvider>
   )
 }
+
+    
