@@ -104,8 +104,8 @@ export default function SchedulePage() {
             {capitalize(format(start, "MMMM", {locale: es}))} {format(end, "yyyy")}
         </p>
         <Card className="flex-1 overflow-hidden">
-            <CardContent className="p-0 h-full">
-                <div className="flex h-full">
+            <CardContent className="p-0 h-full overflow-x-auto">
+                <div className="flex h-full min-w-[7 * 120px] sm:min-w-full">
                     {weekDays.map((day, index) => (
                       <React.Fragment key={day.toString()}>
                         <DayColumn day={weekDayNames[index]} items={scheduleData[weekDayNames[index]]} date={day} />
