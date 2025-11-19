@@ -14,10 +14,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const navItems = [
-  { href: '/home/community', label: 'Comunidad' },
-  { href: '/home/announcements', label: 'Anuncios' },
-  { href: '/home/schedule', label: 'Horario' },
-  { href: '/home/profile', label: 'Perfil' },
+  { href: '/home/community', label: 'Comunidad', icon: Users },
+  { href: '/home/announcements', label: 'Anuncios', icon: Megaphone },
+  { href: '/home/schedule', label: 'Horario', icon: CalendarDays },
+  { href: '/home/profile', label: 'Perfil', icon: User },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -41,46 +41,41 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-full bg-card text-card-foreground">
       <div className="p-4 border-b">
         <Link href="/home/community" className="flex items-center gap-2">
-          <GraduationCap className="h-8 w-8 text-accent" />
+          <GraduationCap className="h-8 w-8 text-primary" />
           <span className="font-headline text-xl font-bold">UNCH Connect</span>
         </Link>
       </div>
       <nav className="flex-1 p-4 space-y-2">
         {navItems.map((item) => {
-           const Icon = {
-            '/home/community': Users,
-            '/home/announcements': Megaphone,
-            '/home/schedule': CalendarDays,
-            '/home/profile': User,
-          }[item.href] || Users;
-
+           const Icon = item.icon;
+           const isActive = pathname.startsWith(item.href) || (pathname === '/home' && item.href === '/home/community');
           return (
             <Link key={item.href} href={item.href}>
               <Button
-                variant={pathname.startsWith(item.href) || (pathname === '/home' && item.href === '/home/community') ? 'secondary' : 'ghost'}
-                className="w-full justify-start gap-3"
+                variant={isActive ? 'secondary' : 'ghost'}
+                className="w-full justify-start gap-3 text-base h-11"
               >
-                <Icon className="h-5 w-5" />
+                <Icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
                 {item.label}
               </Button>
             </Link>
           )
         })}
       </nav>
-      <div className="p-4 mt-auto border-t">
+      <div className="p-2 mt-auto border-t">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="w-full justify-start h-auto p-2">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-9 w-9">
+              <div className="flex items-center gap-3 w-full">
+                <Avatar className="h-10 w-10">
                   <AvatarImage src={getImageUrl('user-avatar-main')} />
                   <AvatarFallback>U</AvatarFallback>
                 </Avatar>
-                <div className="text-left">
-                  <p className="font-medium text-sm">Estudiante</p>
-                  <p className="text-xs text-muted-foreground">c2024@unsch.edu.pe</p>
+                <div className="text-left flex-1 truncate">
+                  <p className="font-semibold text-sm truncate">Estudiante</p>
+                  <p className="text-xs text-muted-foreground truncate">c2024@unsch.edu.pe</p>
                 </div>
-                <MoreHorizontal className="ml-auto h-5 w-5" />
+                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
               </div>
             </Button>
           </DropdownMenuTrigger>
@@ -105,12 +100,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <TooltipProvider>
-      <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-        <div className="hidden border-r bg-card md:block">
+      <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr]">
+        <div className="hidden border-r bg-card md:flex flex-col">
           {sidebarContent}
         </div>
         <div className="flex flex-col">
-          <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-10">
+          <header className="flex h-16 items-center gap-4 border-b bg-card px-4 lg:px-6 sticky top-0 z-30">
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -129,7 +124,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="search"
-                      placeholder="Buscar anuncios..."
+                      placeholder="Buscar en anuncios..."
                       className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -138,21 +133,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </form>
                )}
             </div>
-             <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="secondary" size="icon" className="gap-2 hidden sm:flex">
-                    <PlusSquare className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Crear publicación</p>
-                </TooltipContent>
-            </Tooltip>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="primary" size="icon" className="gap-2 hidden sm:flex rounded-full h-10 w-10">
+                        <PlusSquare className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Crear publicación</p>
+                    </TooltipContent>
+                </Tooltip>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Crear Publicación</DialogTitle>
+                </DialogHeader>
+                <CreatePost />
+              </DialogContent>
+            </Dialog>
+
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
+                <Button variant="ghost" size="icon" className="rounded-full relative">
                   <Bell className="h-5 w-5" />
-                  <span className="sr-only">Toggle notifications</span>
+                  <span className="sr-only">Notificaciones</span>
+                   <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary/80"></span>
+                    </span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -160,7 +170,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </TooltipContent>
             </Tooltip>
           </header>
-          <main className="flex-1 overflow-auto p-4 sm:p-6 bg-background/95">{children}</main>
+          <main className="flex-1 overflow-auto p-4 sm:p-6 bg-background">{children}</main>
         </div>
       </div>
     </TooltipProvider>

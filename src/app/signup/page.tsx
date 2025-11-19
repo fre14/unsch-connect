@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useRouter } from 'next/navigation';
 
 const signUpSchema = z.object({
   email: z.string().email("Correo inválido").refine(email => email.endsWith('@unsch.edu.pe'), {
@@ -21,8 +22,8 @@ const signUpSchema = z.object({
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 
-
 export default function SignUpPage() {
+  const router = useRouter();
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -35,17 +36,18 @@ export default function SignUpPage() {
   
   function onSubmit(data: SignUpFormValues) {
     console.log(data);
-    // Handle submission
+    // On successful signup, redirect to login
+    router.push('/');
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
        <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
-      <Card className="w-full max-w-md animate-fade-in-up border-accent/20 bg-card/80 shadow-lg shadow-accent/10 backdrop-blur-sm">
+      <Card className="w-full max-w-md animate-fade-in-up border-primary/20 bg-card/80 shadow-lg shadow-primary/10 backdrop-blur-sm">
         <CardHeader className="items-center text-center">
-            <div className="mb-4 flex items-center gap-3 text-accent">
-                <GraduationCap size={32} />
-                <h1 className="font-headline text-3xl font-bold tracking-tighter text-foreground">
+            <div className="mb-4 flex items-center gap-3 text-primary">
+                <GraduationCap size={40} strokeWidth={1.5} />
+                <h1 className="font-headline text-4xl font-bold tracking-tighter text-foreground">
                 UNCH Connect
                 </h1>
             </div>
@@ -68,52 +70,56 @@ export default function SignUpPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="studentCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Código de Estudiante</FormLabel>
-                    <FormControl>
-                      <Input placeholder="8 dígitos" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="career"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Carrera Profesional</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: Ing. de Sistemas" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="studentCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Código</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ej: 2024..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="career"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Carrera</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ej: Ing. Sistemas" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Crea una Contraseña</FormLabel>
+                    <FormLabel>Contraseña</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input type="password" placeholder="********" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">Registrarse</Button>
+              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+                Registrarse
+              </Button>
             </form>
           </Form>
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-6 text-center text-sm">
               ¿Ya tienes una cuenta?{' '}
-              <Link href="/" className="underline text-accent hover:text-accent/80">
-                  Iniciar sesión
+              <Link href="/" className="font-semibold underline text-primary hover:text-primary/80 transition-colors">
+                  Inicia sesión
               </Link>
           </div>
         </CardContent>

@@ -4,7 +4,8 @@ import { useSearchParams } from 'next/navigation';
 import { PostCard, PostProps } from '@/components/post-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, XCircle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 
 const allAnnouncements: PostProps[] = [
@@ -83,15 +84,17 @@ export default function AnnouncementsPage() {
                 </Select>
             </div>
         </div>
-        <div className="space-y-6">
+        <div className="space-y-4">
         {filteredAnnouncements.length > 0 ? (
             filteredAnnouncements.map((post) => (
                 <PostCard key={post.id} {...post} />
             ))
         ) : (
-             <div className="text-center text-muted-foreground p-8 border rounded-lg bg-card">
-                <p>No se encontraron anuncios que coincidan con tu búsqueda.</p>
-            </div>
+             <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card">
+                <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                <h3 className="mt-4 text-xl font-semibold text-foreground">No se encontraron anuncios</h3>
+                <p className="mt-2">Intenta ajustar tu búsqueda o filtro para encontrar lo que buscas.</p>
+            </Card>
         )}
         </div>
     </div>

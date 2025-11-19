@@ -4,13 +4,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit } from "lucide-react";
+import { Edit, Mail, Link as LinkIcon, CalendarDays } from "lucide-react";
 import Link from 'next/link';
 import { getImageUrl } from '@/lib/placeholder-images';
 
 const userPosts: PostProps[] = [
     {
-      author: { name: 'Estudiante', username: '@estudiante_ejemplar', avatarId: 'user-avatar-main' },
+      author: { name: 'Estudiante Ejemplar', username: '@estudiante_ejemplar', avatarId: 'user-avatar-main' },
       time: 'hace 1 día',
       content: '¡Qué gran día en el campus! El sol brilla y la energía es increíble. #VidaUniversitaria',
       imageId: 'campus-image',
@@ -34,17 +34,17 @@ const reposts: PostProps[] = [
 export default function ProfilePage() {
     return (
         <div className="max-w-3xl mx-auto space-y-6">
-            <Card className="overflow-hidden">
-                <div className="h-32 md:h-48 bg-gradient-to-r from-primary to-accent" />
+            <Card className="overflow-hidden shadow-md">
+                <div className="h-36 md:h-48 bg-gradient-to-r from-primary/80 to-accent/70" />
                 <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-16 sm:-mt-20">
-                        <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-card">
+                    <div className="flex items-end gap-4 -mt-16 sm:-mt-20">
+                        <Avatar className="h-28 w-28 sm:h-32 sm:w-32 border-4 border-background ring-2 ring-primary/50">
                             <AvatarImage src={getImageUrl('profile-pic-large')} />
                             <AvatarFallback>E</AvatarFallback>
                         </Avatar>
-                        <div className="sm:ml-auto flex gap-2">
+                        <div className="ml-auto flex gap-2 pb-2">
                              <Link href="/home/settings" passHref>
-                                <Button variant="outline" className="gap-2">
+                                <Button variant="outline" className="gap-2 rounded-full">
                                     <Edit className="h-4 w-4" /> Editar Perfil
                                 </Button>
                             </Link>
@@ -52,13 +52,18 @@ export default function ProfilePage() {
                     </div>
                     <div className="mt-4">
                         <h2 className="font-headline text-2xl font-bold">Estudiante Ejemplar</h2>
-                        <p className="text-muted-foreground">@estudiante_ejemplar</p>
-                        <p className="mt-2 text-sm max-w-prose">
+                        <p className="text-muted-foreground font-mono text-sm">@estudiante_ejemplar</p>
+                        <p className="mt-3 text-base max-w-prose text-foreground/90">
                             Estudiante de Ingeniería de Sistemas en la UNSCH. Apasionado por la tecnología y el desarrollo de software.
                         </p>
-                        <div className="mt-4 flex gap-4 text-sm text-muted-foreground">
-                            <span><span className="font-bold text-foreground">120</span> Seguidores</span>
-                            <span><span className="font-bold text-foreground">85</span> Seguidos</span>
+                        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1.5"><Mail className="h-4 w-4"/><span>c2024@unsch.edu.pe</span></div>
+                            <div className="flex items-center gap-1.5"><LinkIcon className="h-4 w-4"/> <a href="#" className="hover:underline">website.com</a></div>
+                            <div className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/><span>Se unió en Julio, 2024</span></div>
+                        </div>
+                        <div className="mt-4 flex gap-6 text-sm">
+                            <Link href="#" className="hover:underline"><span className="font-bold text-foreground">120</span> <span className="text-muted-foreground">Seguidores</span></Link>
+                            <Link href="#" className="hover:underline"><span className="font-bold text-foreground">85</span> <span className="text-muted-foreground">Siguiendo</span></Link>
                         </div>
                     </div>
                 </CardContent>
@@ -67,7 +72,7 @@ export default function ProfilePage() {
             <Tabs defaultValue="posts" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="posts">Publicaciones</TabsTrigger>
-                    <TabsTrigger value="reposts">Reposteos</TabsTrigger>
+                    <TabsTrigger value="reposts">Reposts</TabsTrigger>
                 </TabsList>
                 <TabsContent value="posts">
                     <div className="space-y-6 mt-6">
