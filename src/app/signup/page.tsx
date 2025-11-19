@@ -1,23 +1,71 @@
+
 "use client";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { GraduationCap } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useRouter } from 'next/navigation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const careers = [
+    "Administración de Empresas",
+    "Agronomía",
+    "Ciencias Físico - Matemáticas: Matemática",
+    "Ciencias Físico - Matemáticas: Física",
+    "Ciencias Físico - Matemáticas: Estadística",
+    "Contabilidad y Auditoría",
+    "Economía",
+    "Ingeniería Agrícola",
+    "Ingeniería Agroforestal",
+    "Ingeniería Agroindustrial",
+    "Ingeniería Civil",
+    "Ingeniería de Minas",
+    "Ingeniería de Sistemas",
+    "Ingeniería en Industrias Alimentarias",
+    "Ingeniería Química",
+    "Arquitectura",
+    "Ingeniería Ambiental",
+    "Antropología Social",
+    "Arqueología Historia: Arqueología",
+    "Arqueolgía e Historia: História",
+    "Ciencias de la Comunicación",
+    "Derecho",
+    "Educación Física",
+    "Educación Inicial",
+    "Educación Primaria",
+    "Educación Secundaria: Lengua Española y Literatura",
+    "Educación Secundaria: Matemática, Física e Informática",
+    "Educación Secundaria: Ciencias Sociales y Filosofía",
+    "Educación Secundaria: Ingles y Lengua Española",
+    "Trabajo Social",
+    "Biología: Microbiología",
+    "Biología: Biotecnología",
+    "Biología: Ecología y Recursos Naturales",
+    "Enfermería",
+    "Farmacia y Bioquímica",
+    "Medicina Humana",
+    "Medicina Veterinaria",
+    "Obstetricia",
+    "Psicología",
+];
+
 
 const signUpSchema = z.object({
   email: z.string().email("Correo inválido").refine(email => email.endsWith('@unsch.edu.pe'), {
     message: 'Debe ser un correo institucional de la UNSCH.',
   }),
   studentCode: z.string().length(8, "El código debe tener 8 dígitos.").regex(/^\d{8}$/, "El código solo debe contener números."),
-  career: z.string().min(3, "La carrera debe tener al menos 3 caracteres."),
+  career: z.string({ required_error: "Debes seleccionar una carrera."}).min(1, "Debes seleccionar una carrera."),
   password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres.'),
+  confirmPassword: z.string()
+}).refine(data => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden.",
+    path: ["confirmPassword"],
 });
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
@@ -31,6 +79,7 @@ export default function SignUpPage() {
       studentCode: '',
       career: '',
       password: '',
+      confirmPassword: ''
     }
   });
   
@@ -70,34 +119,41 @@ export default function SignUpPage() {
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="studentCode"
-                  render={({ field }) => (
+              <FormField
+                control={form.control}
+                name="studentCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Código de Estudiante</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej: 2024..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="career"
+                render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Código</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ej: 2024..." {...field} />
-                      </FormControl>
-                      <FormMessage />
+                        <FormLabel>Carrera Profesional</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona tu carrera" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {careers.map(career => (
+                                    <SelectItem key={career} value={career}>{career}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
                     </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="career"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Carrera</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ej: Ing. Sistemas" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                )}
+               />
               <FormField
                 control={form.control}
                 name="password"
@@ -111,7 +167,20 @@ export default function SignUpPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirmar Contraseña</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="********" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full !mt-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
                 Registrarse
               </Button>
             </form>
