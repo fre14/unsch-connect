@@ -4,13 +4,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { GraduationCap } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email("Correo inválido"),
@@ -21,6 +23,8 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const auth = useAuth();
+  const { toast } = useToast();
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -29,10 +33,22 @@ export default function LoginPage() {
     }
   });
   
-  function onSubmit(data: LoginFormValues) {
-    console.log(data);
-    // On successful login, redirect
-    router.push('/home/community');
+  async function onSubmit(data: LoginFormValues) {
+    try {
+      await signInWithEmailAndPassword(auth, data.email, data.password);
+      router.push('/home/community');
+    } catch (error: any) {
+      console.error("Error al iniciar sesión:", error.code);
+      let description = "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.";
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        description = "El correo electrónico o la contraseña son incorrectos.";
+      }
+      toast({
+        variant: "destructive",
+        title: "Error al iniciar sesión",
+        description,
+      });
+    }
   }
 
   return (
@@ -83,8 +99,8 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full !mt-6 font-semibold">
-                Iniciar Sesión
+              <Button type="submit" className="w-full !mt-6 font-semibold" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
               </Button>
             </form>
           </Form>
