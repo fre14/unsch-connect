@@ -8,7 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, Mail, Link as LinkIcon, CalendarDays, XCircle } from "lucide-react";
 import Link from 'next/link';
-import { getImageUrl } from '@/lib/placeholder-images';
 import { useUser } from '@/context/user-context';
 
 const userPosts: PostProps[] = [
@@ -20,12 +19,12 @@ const reposts: PostProps[] = [
 ]
 
 export default function ProfilePage() {
-    const { avatar } = useUser();
+    const { avatar, coverImage } = useUser();
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             <Card className="overflow-hidden shadow-md">
                 <div className="relative w-full h-36 md:h-48">
-                    <Image src={getImageUrl('aniversary-banner')} alt="Profile Banner" fill className="object-cover" />
+                    <Image src={coverImage} alt="Profile Banner" fill className="object-cover" />
                 </div>
                 <CardContent className="p-4 sm:p-6">
                     <div className="flex items-end gap-4 -mt-16 sm:-mt-20">

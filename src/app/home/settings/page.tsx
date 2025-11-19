@@ -12,7 +12,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { useUser } from "@/context/user-context";
 
 export default function SettingsPage() {
-    const { avatar, setAvatar } = useUser();
+    const { avatar, setAvatar, coverImage, setCoverImage } = useUser();
     return (
         <div className="max-w-2xl mx-auto space-y-8">
             <h1 className="font-headline text-3xl font-bold">Configuración</h1>
@@ -28,6 +28,14 @@ export default function SettingsPage() {
                         <ImageUpload 
                             initialImage={avatar} 
                             onImageChange={setAvatar} 
+                        />
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Foto de Portada</Label>
+                        <ImageUpload 
+                            initialImage={coverImage} 
+                            onImageChange={setCoverImage}
+                            aspectRatio="aspect-[16/5]"
                         />
                     </div>
                     <div className="space-y-2">
