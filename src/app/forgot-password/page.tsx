@@ -11,6 +11,8 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Correo inválido"),
@@ -21,6 +23,7 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
@@ -28,14 +31,22 @@ export default function ForgotPasswordPage() {
     }
   });
   
-  function onSubmit(data: ForgotPasswordFormValues) {
-    console.log(data);
-    // Here you would typically call your backend to send a reset link
-    toast({
-      title: "Enlace enviado",
-      description: `Se ha enviado un enlace para restablecer tu contraseña a ${data.email}.`,
-    });
-    router.push('/');
+  async function onSubmit(data: ForgotPasswordFormValues) {
+    try {
+      await sendPasswordResetEmail(auth, data.email);
+      toast({
+        title: "Enlace enviado",
+        description: `Se ha enviado un enlace para restablecer tu contraseña a ${data.email}.`,
+      });
+      router.push('/');
+    } catch (error: any) {
+      console.error("Error sending password reset email:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo enviar el correo. Verifica que la dirección sea correcta o inténtalo más tarde.",
+      });
+    }
   }
 
   return (
@@ -68,8 +79,8 @@ export default function ForgotPasswordPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full !mt-6 font-semibold">
-                Enviar Enlace
+              <Button type="submit" className="w-full !mt-6 font-semibold" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? 'Enviando...' : 'Enviar Enlace'}
               </Button>
             </form>
           </Form>
