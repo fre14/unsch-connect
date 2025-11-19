@@ -8,6 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { addDays, format, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, addWeeks } from "date-fns";
 import { es } from "date-fns/locale";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Helper function to capitalize strings
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -94,10 +98,53 @@ export default function SchedulePage() {
                     <Button variant="outline" size="icon" onClick={handlePrevWeek} className="rounded-r-none"><ChevronLeft/></Button>
                     <Button variant="outline" size="icon" onClick={handleNextWeek} className="rounded-l-none border-l-0"><ChevronRight/></Button>
                 </div>
-                <Button className="gap-2">
-                    <PlusCircle className="h-5 w-5" />
-                    <span className="hidden sm:inline">Agregar</span>
-                </Button>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button className="gap-2">
+                            <PlusCircle className="h-5 w-5" />
+                            <span className="hidden sm:inline">Agregar</span>
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Agregar al Horario</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="title">Título</Label>
+                                <Input id="title" placeholder="Ej: Examen de Cálculo" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="type">Tipo</Label>
+                                <Select>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecciona un tipo" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="class">Clase</SelectItem>
+                                        <SelectItem value="event">Evento</SelectItem>
+                                        <SelectItem value="task">Tarea</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="date">Fecha</Label>
+                                    <Input id="date" type="date" />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="time">Hora</Label>
+                                    <Input id="time" type="time" />
+                                </div>
+                            </div>
+                             <div className="grid gap-2">
+                                <Label htmlFor="room">Aula (Opcional)</Label>
+                                <Input id="room" placeholder="Ej: B-301" />
+                            </div>
+                            <Button type="submit" className="w-full mt-2">Guardar Evento</Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
         <p className="text-lg font-semibold text-foreground mb-4">
@@ -105,7 +152,7 @@ export default function SchedulePage() {
         </p>
         <Card className="flex-1 overflow-hidden">
             <CardContent className="p-0 h-full overflow-x-auto">
-                <div className="flex h-full min-w-[7 * 120px] sm:min-w-full">
+                <div className="flex h-full min-w-max sm:min-w-full">
                     {weekDays.map((day, index) => (
                       <React.Fragment key={day.toString()}>
                         <DayColumn day={weekDayNames[index]} items={scheduleData[weekDayNames[index]]} date={day} />
@@ -117,3 +164,5 @@ export default function SchedulePage() {
     </div>
   );
 }
+
+    
