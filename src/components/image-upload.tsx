@@ -1,22 +1,32 @@
 
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { getImageUrl } from "@/lib/placeholder-images";
 import { Camera } from "lucide-react";
 
-export function ImageUpload() {
-  const [imagePreview, setImagePreview] = useState<string | null>(getImageUrl('user-avatar-main'));
+interface ImageUploadProps {
+    initialImage: string;
+    onImageChange: (newImage: string) => void;
+}
+
+export function ImageUpload({ initialImage, onImageChange }: ImageUploadProps) {
+  const [imagePreview, setImagePreview] = useState<string | null>(initialImage);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setImagePreview(initialImage);
+  }, [initialImage]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        const result = reader.result as string;
+        setImagePreview(result);
+        onImageChange(result);
       };
       reader.readAsDataURL(file);
     }

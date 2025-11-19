@@ -1,3 +1,5 @@
+"use client";
+
 import Image from 'next/image';
 import { PostCard, PostProps } from '@/components/post-card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, Mail, Link as LinkIcon, CalendarDays, XCircle } from "lucide-react";
 import Link from 'next/link';
 import { getImageUrl } from '@/lib/placeholder-images';
+import { useUser } from '@/context/user-context';
 
 const userPosts: PostProps[] = [
     // Data removed as requested
@@ -17,6 +20,7 @@ const reposts: PostProps[] = [
 ]
 
 export default function ProfilePage() {
+    const { avatar } = useUser();
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             <Card className="overflow-hidden shadow-md">
@@ -26,7 +30,7 @@ export default function ProfilePage() {
                 <CardContent className="p-4 sm:p-6">
                     <div className="flex items-end gap-4 -mt-16 sm:-mt-20">
                         <Avatar className="h-28 w-28 sm:h-32 sm:w-32 border-4 border-background ring-2 ring-primary/50">
-                            <AvatarImage src={getImageUrl('profile-pic-large')} />
+                            <AvatarImage src={avatar} />
                             <AvatarFallback>E</AvatarFallback>
                         </Avatar>
                         <div className="ml-auto flex gap-2 pb-2">

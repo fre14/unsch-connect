@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CreatePost } from '@/components/create-post';
+import { UserProvider, useUser } from '@/context/user-context';
 
 const navItems = [
   { href: '/home/community', label: 'Comunidad', icon: Users },
@@ -22,11 +23,12 @@ const navItems = [
   { href: '/home/profile', label: 'Perfil', icon: User },
 ];
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = React.useState(searchParams.get('search') || '');
+  const { avatar } = useUser();
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -70,7 +72,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Button variant="ghost" className="w-full justify-start h-auto p-2">
               <div className="flex items-center gap-3 w-full">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={getImageUrl('user-avatar-main')} />
+                  <AvatarImage src={avatar} />
                   <AvatarFallback>U</AvatarFallback>
                 </Avatar>
                 <div className="text-left flex-1 truncate">
@@ -177,4 +179,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
     </TooltipProvider>
   );
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <UserProvider>
+      <AppLayoutContent>{children}</AppLayoutContent>
+    </UserProvider>
+  )
 }

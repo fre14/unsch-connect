@@ -9,8 +9,10 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/image-upload";
+import { useUser } from "@/context/user-context";
 
 export default function SettingsPage() {
+    const { avatar, setAvatar } = useUser();
     return (
         <div className="max-w-2xl mx-auto space-y-8">
             <h1 className="font-headline text-3xl font-bold">Configuración</h1>
@@ -23,7 +25,10 @@ export default function SettingsPage() {
                 <CardContent className="space-y-6">
                     <div className="space-y-2">
                         <Label>Foto de Perfil</Label>
-                        <ImageUpload />
+                        <ImageUpload 
+                            initialImage={avatar} 
+                            onImageChange={setAvatar} 
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="name">Nombre</Label>

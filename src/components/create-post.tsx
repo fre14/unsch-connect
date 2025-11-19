@@ -6,16 +6,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Image as ImageIcon, Globe } from "lucide-react";
-import { getImageUrl } from "@/lib/placeholder-images";
+import { useUser } from "@/context/user-context";
 import { Card, CardContent } from "./ui/card";
 
 export function CreatePost() {
+  const { avatar } = useUser();
   return (
     <Card className="sm:border-b sm:rounded-none sm:shadow-none sm:p-0">
       <CardContent className="p-4">
         <div className="grid grid-cols-[auto,1fr] gap-4">
           <Avatar className="h-12 w-12">
-            <AvatarImage src={getImageUrl('user-avatar-main')} />
+            <AvatarImage src={avatar} />
             <AvatarFallback>U</AvatarFallback>
           </Avatar>
           <div className="space-y-2">
