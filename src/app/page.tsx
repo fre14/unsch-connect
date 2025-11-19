@@ -37,10 +37,10 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
       <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
-      <Card className="w-full max-w-md animate-fade-in-up border-primary/20 bg-card/80 shadow-lg shadow-primary/10 backdrop-blur-sm">
+       <Card className="w-full max-w-md animate-fade-in-up border-border/50 shadow-lg">
         <CardHeader className="items-center text-center">
             <div className="mb-4 flex items-center gap-3 text-primary">
-                <GraduationCap size={40} strokeWidth={1.5} />
+                <GraduationCap size={40} strokeWidth={2} />
                 <h1 className="font-headline text-4xl font-bold tracking-tighter text-foreground">
                 UNCH Connect
                 </h1>
@@ -69,7 +69,12 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contraseña</FormLabel>
+                    <div className="flex items-center justify-between">
+                        <FormLabel>Contraseña</FormLabel>
+                         <Link href="#" className="text-sm font-medium text-primary hover:underline">
+                            ¿Olvidaste tu contraseña?
+                         </Link>
+                    </div>
                     <FormControl>
                       <Input type="password" placeholder="********" {...field} />
                     </FormControl>
@@ -77,19 +82,14 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              <div className="flex items-center justify-between text-sm">
-                  <Link href="#" className="underline text-muted-foreground hover:text-primary">
-                    ¿Olvidaste tu contraseña?
-                  </Link>
-              </div>
-              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+              <Button type="submit" className="w-full !mt-6 font-semibold">
                 Iniciar Sesión
               </Button>
             </form>
           </Form>
-          <div className="mt-6 text-center text-sm">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
               ¿No tienes una cuenta?{' '}
-              <Link href="/signup" className="font-semibold underline text-primary hover:text-primary/80 transition-colors">
+              <Link href="/signup" className="font-semibold text-primary hover:underline">
                   Regístrate aquí
               </Link>
           </div>

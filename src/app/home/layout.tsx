@@ -47,7 +47,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <span className="font-headline text-xl font-bold">UNCH Connect</span>
         </Link>
       </div>
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-2 space-y-1">
         {navItems.map((item) => {
            const Icon = item.icon;
            const isActive = pathname.startsWith(item.href) || (pathname === '/home' && item.href === '/home/community');
@@ -102,7 +102,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <TooltipProvider>
-      <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr]">
+      <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
         <div className="hidden border-r bg-card md:flex flex-col">
           {sidebarContent}
         </div>
@@ -139,7 +139,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <DialogTrigger asChild>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="primary" size="icon" className="gap-2 hidden sm:flex rounded-full h-10 w-10">
+                      <Button variant="default" size="icon" className="gap-2 hidden sm:flex rounded-full h-10 w-10">
                         <PlusSquare className="h-5 w-5" />
                       </Button>
                     </TooltipTrigger>
