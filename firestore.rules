@@ -26,8 +26,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // By default, deny all reads and writes. Access must be granted explicitly.
-    allow read, write: if false;
 
     /**
      * @description Secure user profile data. Allows anyone to create their own profile, but only the owner can read/write afterward.
