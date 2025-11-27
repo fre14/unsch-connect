@@ -32,6 +32,14 @@ export default function ForgotPasswordPage() {
   });
   
   async function onSubmit(data: ForgotPasswordFormValues) {
+    if (!auth) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Servicio de autenticación no disponible. Inténtalo más tarde.",
+      });
+      return;
+    }
     try {
       await sendPasswordResetEmail(auth, data.email);
       toast({
@@ -51,7 +59,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
-      <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+      <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,hsl(var(--primary)/0.05)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--primary)/0.05)_1px,transparent_1px)] bg-[size:14px_24px]"></div>
        <Card className="w-full max-w-md animate-fade-in-up border-border/50 shadow-lg">
         <CardHeader className="items-center text-center">
             <div className="mb-4 flex items-center gap-3 text-primary">
@@ -79,14 +87,14 @@ export default function ForgotPasswordPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full !mt-6 font-semibold" disabled={form.formState.isSubmitting}>
+              <Button type="submit" className="w-full !mt-6 font-semibold bg-accent text-accent-foreground hover:bg-accent/90" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? 'Enviando...' : 'Enviar Enlace'}
               </Button>
             </form>
           </Form>
           <div className="mt-6 text-center text-sm text-muted-foreground">
               ¿Recuerdas tu contraseña?{' '}
-              <Link href="/" className="font-semibold text-primary hover:underline">
+              <Link href="/" className="font-semibold text-accent hover:underline">
                   Inicia sesión
               </Link>
           </div>
