@@ -94,9 +94,10 @@ service cloud.firestore {
       }
 
       allow read;
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update: if isExistingOwner(resource.data.authorId);
-      allow delete: if isExistingOwner(resource.data.authorId);
+      allow write: if isSignedIn() && (
+        (request.method == 'create' && request.resource.data.authorId == request.auth.uid) ||
+        ((request.method == 'update' || request.method == 'delete') && isExistingOwner(resource.data.authorId))
+      );
     }
 
      /**
@@ -201,5 +202,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
