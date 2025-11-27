@@ -81,23 +81,14 @@ service cloud.firestore {
      * @principle Allows public reads but enforces ownership for writes.
      */
     match /posts/{postId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
+      // Allow public read access for anyone to see posts.
+      allow read: if true;
 
-      function isOwner(authorId) {
-        return isSignedIn() && request.auth.uid == authorId;
-      }
-
-      function isExistingOwner(authorId) {
-        return isOwner(authorId) && resource != null;
-      }
-
-      allow read;
-      allow write: if isSignedIn() && (
-        (request.method == 'create' && request.resource.data.authorId == request.auth.uid) ||
-        ((request.method == 'update' || request.method == 'delete') && isExistingOwner(resource.data.authorId))
-      );
+      // Allow authenticated users to create posts for themselves.
+      allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
+      
+      // Allow authenticated users to update or delete their own posts.
+      allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
     }
 
      /**
