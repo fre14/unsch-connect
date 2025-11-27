@@ -26,6 +26,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow public read access to all documents by default.
+    // Write access is explicitly denied and must be granted on a per-collection basis.
+    allow read: if true;
+    allow write: if false;
 
     /**
      * @description Secure user profile data. Allows anyone to create their own profile, but only the owner can read/write afterward.
@@ -47,23 +51,11 @@ service cloud.firestore {
       function isOwner(userId) {
         return isSignedIn() && request.auth.uid == userId;
       }
-
-      function isNewOwner(userId) {
-        // The user is creating their own profile.
-        // `resource` is null because the document doesn't exist yet.
-        return isOwner(userId) && resource == null;
-      }
       
-      function isExistingOwner(userId) {
-        // The user is modifying their own existing profile.
-        return isOwner(userId) && exists(/databases/$(database)/documents/userProfiles/$(userId));
-      }
-
       allow get: if isOwner(userProfileId);
       allow list: if false; // User listing is disabled for privacy.
-      allow create: if isNewOwner(userProfileId);
-      allow update: if isExistingOwner(userProfileId);
-      allow delete: if isExistingOwner(userProfileId);
+      allow create: if isOwner(userProfileId);
+      allow update, delete: if isOwner(userProfileId);
     }
 
     /**
@@ -81,9 +73,6 @@ service cloud.firestore {
      * @principle Allows public reads but enforces ownership for writes.
      */
     match /posts/{postId} {
-      // Allow public read access for anyone to see posts.
-      allow read: if true;
-
       // Allow authenticated users to create posts for themselves.
       allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
       
@@ -106,22 +95,8 @@ service cloud.firestore {
       * @principle Allows public reads but enforces ownership for writes.
       */
     match /posts/{postId}/comments/{commentId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(authorId) {
-        return isSignedIn() && request.auth.uid == authorId;
-      }
-
-      function isExistingOwner(authorId) {
-        return isOwner(authorId) && resource != null;
-      }
-
-      allow read;
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update: if isExistingOwner(resource.data.authorId);
-      allow delete: if isExistingOwner(resource.data.authorId);
+      allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
     }
 
     /**
@@ -132,8 +107,7 @@ service cloud.firestore {
      * @principle Allows public reads but disables writes.
      */
     match /announcements/{announcementId} {
-      allow read;
-      allow create, update, delete: if false;
+      allow write: if false;
     }
 
     /**
@@ -148,23 +122,11 @@ service cloud.firestore {
      * @principle Enforces document ownership for all operations.
      */
     match /userProfiles/{userProfileId}/academicSchedules/{academicScheduleId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userProfileId);
-      allow list: if isOwner(userProfileId);
-      allow create: if isOwner(userProfileId);
-      allow update: if isExistingOwner(userProfileId);
-      allow delete: if isExistingOwner(userProfileId);
+      allow read, write: if isOwner(userProfileId);
     }
 
     /**
@@ -176,15 +138,8 @@ service cloud.firestore {
      * @deny (list, update): Listing and updating tokens is forbidden.
      */
     match /passwordResetTokens/{tokenId} {
-        function isSignedIn() {
-            return request.auth != null;
-        }
-
-        // Allow creation of password reset tokens.  Additional validation can be added here to rate-limit token creation
-        allow create: if isSignedIn();
-
-        // Allow retrieval of password reset tokens.  The backend must implement additional checks (expiration time, used flag)
-        allow get: if true;
+        // Allow creation of password reset tokens.
+        allow create: if request.auth != null;
 
         // Deletion should not be allowed directly. The "used" field should be used instead.
         allow delete: if false;
