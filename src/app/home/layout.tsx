@@ -4,7 +4,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Bell, CalendarDays, GraduationCap, LogOut, Menu, Megaphone, MoreHorizontal, PlusSquare, Search, Settings, User, Users } from 'lucide-react';
+import { Bell, CalendarDays, GraduationCap, LogOut, Menu, Megaphone, MoreHorizontal, PlusSquare, Search, Settings, User, Users, LoaderCircle } from 'lucide-react';
 import { getImageUrl } from '@/lib/placeholder-images';
 
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CreatePost } from '@/components/create-post';
 import { UserProvider, useUser } from '@/context/user-context';
-import { PostProvider } from '@/context/post-context';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 const navItems = [
   { href: '/home/community', label: 'Comunidad', icon: Users },
@@ -35,9 +36,17 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const auth = useAuth();
   const [searchTerm, setSearchTerm] = React.useState(searchParams.get('search') || '');
-  const { avatar } = useUser();
+  const { avatar, userProfile, isUserLoading } = useUser();
   const [showNotificationDot, setShowNotificationDot] = React.useState(true);
+
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/');
+    }
+  };
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -84,10 +93,16 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                   <AvatarImage src={avatar} />
                   <AvatarFallback>U</AvatarFallback>
                 </Avatar>
+                 {isUserLoading ? (
+                    <div className="flex-1 flex items-center">
+                        <LoaderCircle className="animate-spin h-5 w-5 text-muted-foreground" />
+                    </div>
+                ) : (
                 <div className="text-left flex-1 truncate">
-                  <p className="font-semibold text-sm truncate">Estudiante</p>
-                  <p className="text-xs text-muted-foreground truncate">c2024@unsch.edu.pe</p>
+                  <p className="font-semibold text-sm truncate">{userProfile?.firstName || userProfile?.email?.split('@')[0] || 'Usuario'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{userProfile?.email || 'cargando...'}</p>
                 </div>
+                )}
                 <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
               </div>
             </Button>
@@ -102,8 +117,8 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
               <Link href="/home/settings"><Settings className="mr-2 h-4 w-4" /> Ajustes</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/"><LogOut className="mr-2 h-4 w-4" /> Cerrar sesión</Link>
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -220,9 +235,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <UserProvider>
-        <PostProvider>
-            <AppLayoutContent>{children}</AppLayoutContent>
-        </PostProvider>
+      <AppLayoutContent>{children}</AppLayoutContent>
     </UserProvider>
   )
 }

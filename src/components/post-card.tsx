@@ -1,10 +1,11 @@
+
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MessageCircle, Heart, Repeat, MoreHorizontal, Bookmark, Flag, BadgeCheck } from 'lucide-react';
-import { getImageUrl, PlaceHolderImages } from '@/lib/placeholder-images';
+import { getImageUrl } from '@/lib/placeholder-images';
 
 export type PostProps = {
   id?: string;
@@ -26,9 +27,9 @@ export type PostProps = {
   category?: string;
 };
 
-export function PostCard({ author, time, content, imageId, imageAlt, stats, isOfficial = false }: PostProps) {
+export function PostCard({ id, author, time, content, imageId, imageAlt, stats, isOfficial = false }: PostProps) {
   const authorAvatarUrl = getImageUrl(author.avatarId);
-  const postImage = imageId ? PlaceHolderImages.find(img => img.id === imageId) : null;
+  const postImageUrl = imageId ? getImageUrl(imageId) : null;
 
   return (
     <Card className="overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -43,7 +44,7 @@ export function PostCard({ author, time, content, imageId, imageAlt, stats, isOf
                     <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold font-headline hover:underline cursor-pointer">{author.name}</p>
                         {isOfficial && <BadgeCheck className="h-4 w-4 text-primary" />}
-                        <p className="text-sm text-muted-foreground">{author.username}</p>
+                        <p className="text-sm text-muted-foreground">@{author.username}</p>
                     </div>
                     <p className="text-sm text-muted-foreground">{time}</p>
                 </div>
@@ -60,9 +61,9 @@ export function PostCard({ author, time, content, imageId, imageAlt, stats, isOf
                 </DropdownMenu>
             </div>
             <p className="whitespace-pre-wrap text-base">{content}</p>
-            {postImage && imageAlt && (
+            {postImageUrl && imageAlt && (
             <div className="relative aspect-video w-full overflow-hidden rounded-lg border">
-                <Image src={postImage.imageUrl} alt={imageAlt} fill className="object-cover" data-ai-hint={postImage.imageHint} />
+                <Image src={postImageUrl} alt={imageAlt} fill className="object-cover" />
             </div>
             )}
             <div className="flex justify-between items-center pt-2 -ml-2">

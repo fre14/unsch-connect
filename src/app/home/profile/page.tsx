@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from 'next/image';
@@ -6,31 +7,52 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Mail, Link as LinkIcon, CalendarDays, XCircle } from "lucide-react";
+import { Edit, Mail, Link as LinkIcon, CalendarDays, XCircle, LoaderCircle } from "lucide-react";
 import Link from 'next/link';
 import { useUser } from '@/context/user-context';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const userPosts: PostProps[] = [
-    // Data has been removed and should be fetched from a database.
-];
-
-const reposts: PostProps[] = [
-    // Data has been removed and should be fetched from a database.
-]
+const userPosts: PostProps[] = [];
+const reposts: PostProps[] = [];
 
 export default function ProfilePage() {
-    const { avatar, coverImage } = useUser();
+    const { avatar, coverImage, userProfile, isUserLoading } = useUser();
+
+    if (isUserLoading) {
+        return (
+             <div className="max-w-3xl mx-auto space-y-6">
+                <Card className="overflow-hidden shadow-md">
+                    <Skeleton className="w-full h-36 md:h-48" />
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="flex items-end gap-4 -mt-16 sm:-mt-20">
+                            <Skeleton className="h-28 w-28 sm:h-32 sm:w-32 rounded-full border-4 border-background ring-2 ring-primary/50" />
+                        </div>
+                        <div className="mt-4 space-y-3">
+                            <Skeleton className="h-8 w-1/2" />
+                            <Skeleton className="h-4 w-1/4" />
+                            <Skeleton className="h-12 w-full" />
+                            <div className="flex gap-4">
+                                <Skeleton className="h-4 w-1/3" />
+                                <Skeleton className="h-4 w-1/3" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+             </div>
+        )
+    }
+
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             <Card className="overflow-hidden shadow-md">
-                <div className="relative w-full h-36 md:h-48">
+                <div className="relative w-full h-36 md:h-48 bg-muted">
                     <Image src={coverImage} alt="Profile Banner" fill className="object-cover" />
                 </div>
                 <CardContent className="p-4 sm:p-6">
                     <div className="flex items-end gap-4 -mt-16 sm:-mt-20">
                         <Avatar className="h-28 w-28 sm:h-32 sm:w-32 border-4 border-background ring-2 ring-primary/50">
                             <AvatarImage src={avatar} />
-                            <AvatarFallback>E</AvatarFallback>
+                            <AvatarFallback>{userProfile?.firstName?.charAt(0) || userProfile?.email?.charAt(0) || 'U'}</AvatarFallback>
                         </Avatar>
                         <div className="ml-auto flex gap-2 pb-2">
                              <Link href="/home/settings" passHref>
@@ -41,13 +63,13 @@ export default function ProfilePage() {
                         </div>
                     </div>
                     <div className="mt-4">
-                        <h2 className="font-headline text-2xl font-bold">Estudiante Ejemplar</h2>
-                        <p className="text-muted-foreground font-mono text-sm">@estudiante_ejemplar</p>
+                        <h2 className="font-headline text-2xl font-bold">{userProfile?.firstName || 'Estudiante'} {userProfile?.lastName || 'Ejemplar'}</h2>
+                        <p className="text-muted-foreground font-mono text-sm">@{userProfile?.email?.split('@')[0] || 'usuario'}</p>
                         <p className="mt-3 text-base max-w-prose text-foreground/90">
-                            Estudiante de Ingeniería de Sistemas en la UNSCH. Apasionado por la tecnología y el desarrollo de software.
+                            {userProfile?.description || 'Actualiza tu biografía en la configuración.'}
                         </p>
                         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1.5"><Mail className="h-4 w-4"/><span>c2024@unsch.edu.pe</span></div>
+                            {userProfile?.email && <div className="flex items-center gap-1.5"><Mail className="h-4 w-4"/><span>{userProfile.email}</span></div>}
                             <div className="flex items-center gap-1.5"><LinkIcon className="h-4 w-4"/> <a href="#" className="hover:underline">website.com</a></div>
                             <div className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/><span>Se unió en Julio, 2024</span></div>
                         </div>

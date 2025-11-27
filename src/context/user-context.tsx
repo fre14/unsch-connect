@@ -1,23 +1,68 @@
+
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { getImageUrl } from '@/lib/placeholder-images';
+import { useUser as useFirebaseUser } from '@/firebase';
+import { useDoc } from '@/firebase/firestore/use-doc';
+import { doc, DocumentData } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+
+interface UserProfile {
+  id: string;
+  email: string;
+  studentCode: string;
+  firstName: string;
+  lastName: string;
+  school: string;
+  cycle: string;
+  profilePicture: string;
+  description: string;
+}
 
 interface UserContextType {
   avatar: string;
   setAvatar: (newAvatar: string) => void;
   coverImage: string;
   setCoverImage: (newCoverImage: string) => void;
+  userProfile: UserProfile | null;
+  isUserLoading: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
+  const { user, isUserLoading: isAuthLoading } = useFirebaseUser();
+  const firestore = useFirestore();
+
+  const userDocRef = useMemo(() => {
+    if (firestore && user) {
+      return doc(firestore, 'userProfiles', user.uid);
+    }
+    return null;
+  }, [firestore, user]);
+
+  // The type parameter for useDoc should be the raw data type from Firestore, not WithId<T>
+  const { data: userProfileData, isLoading: isProfileLoading } = useDoc<Omit<UserProfile, 'id'>>(userDocRef);
+
+  // Combine auth loading and profile loading states
+  const isUserLoading = isAuthLoading || isProfileLoading;
+  
+  // The complete user profile object, combining the ID from auth and data from Firestore.
+  const userProfile: UserProfile | null = user && userProfileData ? { id: user.uid, ...userProfileData } : null;
+
   const [avatar, setAvatar] = useState<string>(getImageUrl('user-avatar-main'));
   const [coverImage, setCoverImage] = useState<string>(getImageUrl('aniversary-banner'));
+  
+  useEffect(() => {
+    if (userProfile?.profilePicture) {
+      setAvatar(userProfile.profilePicture);
+    }
+  }, [userProfile]);
+
 
   return (
-    <UserContext.Provider value={{ avatar, setAvatar, coverImage, setCoverImage }}>
+    <UserContext.Provider value={{ avatar, setAvatar, coverImage, setCoverImage, userProfile, isUserLoading }}>
       {children}
     </UserContext.Provider>
   );

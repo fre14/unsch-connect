@@ -10,9 +10,79 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/image-upload";
 import { useUser } from "@/context/user-context";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useFirestore, useFirebase } from "@/firebase";
+import { doc, updateDoc } from "firebase/firestore";
+import { toast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
+
+const profileSchema = z.object({
+    firstName: z.string().min(1, "El nombre es requerido."),
+    lastName: z.string().min(1, "El apellido es requerido."),
+    description: z.string().max(160, "La biografía no puede exceder los 160 caracteres.").optional(),
+});
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function SettingsPage() {
-    const { avatar, setAvatar, coverImage, setCoverImage } = useUser();
+    const { avatar, setAvatar, coverImage, setCoverImage, userProfile } = useUser();
+    const firestore = useFirestore();
+    const { user } = useFirebase();
+
+    const form = useForm<ProfileFormValues>({
+        resolver: zodResolver(profileSchema),
+        defaultValues: {
+            firstName: "",
+            lastName: "",
+            description: "",
+        }
+    });
+
+     useEffect(() => {
+        if (userProfile) {
+            form.reset({
+                firstName: userProfile.firstName || "",
+                lastName: userProfile.lastName || "",
+                description: userProfile.description || "",
+            });
+        }
+    }, [userProfile, form]);
+
+    async function onProfileSubmit(data: ProfileFormValues) {
+        if (!user || !firestore) {
+            toast({ variant: "destructive", title: "Error", description: "Usuario no autenticado." });
+            return;
+        }
+
+        const userDocRef = doc(firestore, "userProfiles", user.uid);
+        const updatedData = {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            description: data.description,
+            profilePicture: avatar, // Assuming avatar state is the source of truth
+            // coverImage: coverImage // Add this if you have a coverImage field in firestore
+        };
+
+        updateDoc(userDocRef, updatedData)
+            .then(() => {
+                toast({ title: "Perfil actualizado", description: "Tu información ha sido guardada." });
+            })
+            .catch(serverError => {
+                 const permissionError = new FirestorePermissionError({
+                    path: userDocRef.path,
+                    operation: 'update',
+                    requestResourceData: updatedData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar tu perfil." });
+            });
+    }
+
     return (
         <div className="max-w-2xl mx-auto space-y-8">
             <h1 className="font-headline text-3xl font-bold">Configuración</h1>
@@ -22,35 +92,70 @@ export default function SettingsPage() {
                     <CardTitle>Perfil</CardTitle>
                     <CardDescription>Gestiona tu información pública.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                        <Label>Foto de Perfil</Label>
-                        <ImageUpload 
-                            initialImage={avatar} 
-                            onImageChange={setAvatar} 
-                        />
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Foto de Portada</Label>
-                        <ImageUpload 
-                            initialImage={coverImage} 
-                            onImageChange={setCoverImage}
-                            aspectRatio="aspect-[16/5]"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Nombre</Label>
-                        <Input id="name" defaultValue="Estudiante Ejemplar" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="username">Nombre de usuario</Label>
-                        <Input id="username" defaultValue="@estudiante_ejemplar" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="bio">Biografía</Label>
-                        <Textarea id="bio" defaultValue="Estudiante de Ingeniería de Sistemas en la UNSCH. Apasionado por la tecnología y el desarrollo de software." />
-                    </div>
-                    <Button>Guardar Cambios</Button>
+                <CardContent>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onProfileSubmit)} className="space-y-6">
+                            <div className="space-y-2">
+                                <Label>Foto de Perfil</Label>
+                                <ImageUpload 
+                                    initialImage={avatar} 
+                                    onImageChange={setAvatar} 
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Foto de Portada</Label>
+                                <ImageUpload 
+                                    initialImage={coverImage} 
+                                    onImageChange={setCoverImage}
+                                    aspectRatio="aspect-[16/5]"
+                                />
+                            </div>
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="firstName"
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Nombre</FormLabel>
+                                        <FormControl>
+                                        <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="lastName"
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Apellido</FormLabel>
+                                        <FormControl>
+                                        <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <FormField
+                                control={form.control}
+                                name="description"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Biografía</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="Cuéntanos un poco sobre ti..." {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                            <Button type="submit" disabled={form.formState.isSubmitting}>
+                                {form.formState.isSubmitting ? "Guardando..." : "Guardar Cambios"}
+                            </Button>
+                        </form>
+                    </Form>
                 </CardContent>
             </Card>
 
