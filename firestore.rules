@@ -1,25 +1,4 @@
 
-/**
- * @file Firestore Security Rules for UNSCH Connect Application
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for private data and allows public read access for certain collections like 'announcements' and 'posts'.
- * Password reset tokens are carefully secured to prevent abuse.
- *
- * Data Structure:
- * - /userProfiles/{userId}: Stores individual user profiles. Access is restricted to the owning user, except for creation.
- * - /posts/{postId}: Stores user-generated posts. Publicly readable, but only the author can modify or delete.
- * - /posts/{postId}/comments/{commentId}: Stores comments on posts.
- * - /announcements/{announcementId}: Stores university announcements. Publicly readable.
- * - /userProfiles/{userId}/academicSchedules/{scheduleId}: Stores user's academic schedules. Access is restricted to the owning user.
- * - /passwordResetTokens/{tokenId}: Stores password reset tokens. Requires special handling to prevent abuse.
- *
- * Key Security Decisions:
- * - User listing is disallowed to protect privacy.
- * - Public read access is granted to the 'announcements' and 'posts' collections.
- * - All write operations (except profile creation) are strictly controlled based on ownership.
- * - Data validation is limited to fields crucial for authorization and relational integrity.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -44,13 +23,13 @@ service cloud.firestore {
      * @path /posts/{postId}
      */
     match /posts/{postId} {
-      // Allow public read access for anyone to see posts.
+      // Regla #1: Lectura pública para cualquier documento y la colección.
       allow read: if true;
 
-      // Allow authenticated users to create posts for themselves.
+      // Regla #2: La creación de posts solo para usuarios autenticados.
       allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
       
-      // Allow authenticated users to update or delete their own posts.
+      // Regla #3: La actualización y borrado solo para el autor del post.
       allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
     }
 
