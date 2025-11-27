@@ -69,7 +69,7 @@ service cloud.firestore {
     /**
      * @description Allow public read access to posts, but restrict creation, updates, and deletion to the post author.
      * @path /posts/{postId}
-     * @allow (get, list): Any user can read any post.
+     * @allow (read): Any user can read any post.
      * @allow (create): User with UID 'user_abc' can create a post with authorId 'user_abc'.
      *   Request: auth.uid == 'user_abc' and request.resource.data.authorId == 'user_abc'
      * @allow (update, delete): User with UID 'user_abc' can update/delete a post where post.authorId == 'user_abc'.
@@ -93,7 +93,7 @@ service cloud.firestore {
         return isOwner(authorId) && resource != null;
       }
 
-      allow get, list: if true;
+      allow read;
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
       allow update: if isExistingOwner(resource.data.authorId);
       allow delete: if isExistingOwner(resource.data.authorId);
@@ -102,7 +102,7 @@ service cloud.firestore {
      /**
       * @description Secure comments, allowing anyone to read, but only the author to create, update or delete.
       * @path /posts/{postId}/comments/{commentId}
-      * @allow (get, list): Any user can read all comments.
+      * @allow (read): Any user can read all comments.
       * @allow (create): User with UID 'user_abc' can create a comment with authorId 'user_abc'.
       *   Request: auth.uid == 'user_abc' and request.resource.data.authorId == 'user_abc'
       * @allow (update, delete): User with UID 'user_abc' can update/delete a comment where comment.authorId == 'user_abc'.
@@ -126,7 +126,7 @@ service cloud.firestore {
         return isOwner(authorId) && resource != null;
       }
 
-      allow get, list: if true;
+      allow read;
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
       allow update: if isExistingOwner(resource.data.authorId);
       allow delete: if isExistingOwner(resource.data.authorId);
@@ -135,12 +135,12 @@ service cloud.firestore {
     /**
      * @description Allows public read access to university announcements, but restricts creation, updates, and deletion.
      * @path /announcements/{announcementId}
-     * @allow (get, list): Any user can read any announcement.
+     * @allow (read): Any user can read any announcement.
      * @deny (create, update, delete): No one can create, update or delete announcements.
      * @principle Allows public reads but disables writes.
      */
     match /announcements/{announcementId} {
-      allow get, list: if true;
+      allow read;
       allow create, update, delete: if false;
     }
 
@@ -201,3 +201,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
