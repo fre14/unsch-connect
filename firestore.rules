@@ -16,12 +16,9 @@
  *
  * Key Security Decisions:
  * - User listing is disallowed to protect privacy.
- * - Public read access is granted to the 'announcements' collection, assuming that all documents within are safe to expose.
+ * - Public read access is granted to the 'announcements' and 'posts' collections.
  * - All write operations (except profile creation) are strictly controlled based on ownership.
  * - Data validation is limited to fields crucial for authorization and relational integrity.
- *
- * Denormalization for Authorization:
- * The rules rely on denormalized data, such as the `authorId` field in the `Post` entity, to make authorization decisions without additional reads.
  */
 rules_version = '2';
 service cloud.firestore {
