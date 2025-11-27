@@ -79,7 +79,7 @@ export default function SettingsPage() {
                     requestResourceData: updatedData,
                 });
                 errorEmitter.emit('permission-error', permissionError);
-                toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar tu perfil." });
+                toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar tu perfil. Puede que no tengas permisos." });
             });
     }
 

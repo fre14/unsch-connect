@@ -119,7 +119,9 @@ export default function SignUpPage() {
 
         const userDocRef = doc(firestore, "userProfiles", user.uid);
         
+        // Non-blocking write to firestore
         setDoc(userDocRef, userProfile).catch(serverError => {
+            // This will be caught by the global error handler
             const permissionError = new FirestorePermissionError({
                 path: userDocRef.path,
                 operation: 'create',
