@@ -29,12 +29,8 @@ service cloud.firestore {
      * @path /userProfiles/{userProfileId}
      */
     match /userProfiles/{userProfileId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
       
       allow get: if isOwner(userProfileId);
