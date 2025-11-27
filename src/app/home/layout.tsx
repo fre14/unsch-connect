@@ -4,7 +4,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Bell, CalendarDays, GraduationCap, LogOut, Menu, Megaphone, MoreHorizontal, PlusSquare, Search, Settings, User, Users, LoaderCircle } from 'lucide-react';
+import { Bell, CalendarDays, GraduationCap, LogOut, Menu, Megaphone, MoreHorizontal, Plus, Search, Settings, User, Users, LoaderCircle } from 'lucide-react';
 import { getImageUrl } from '@/lib/placeholder-images';
 
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const [searchTerm, setSearchTerm] = React.useState(searchParams.get('search') || '');
   const { avatar, userProfile, isUserLoading } = useUser();
   const [showNotificationDot, setShowNotificationDot] = React.useState(true);
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = React.useState(false);
 
   const handleLogout = async () => {
     if (auth) {
@@ -58,6 +59,22 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     }
     router.replace(`${pathname}?${params.toString()}`);
   };
+
+  const MobileCreatePostDialog = () => (
+    <Dialog>
+        <DialogTrigger asChild>
+          <Button className="fixed bottom-20 right-6 sm:hidden rounded-full w-14 h-14 shadow-lg z-40 bg-accent hover:bg-accent/90">
+            <Plus className="h-6 w-6" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Crear Publicación</DialogTitle>
+          </DialogHeader>
+          <CreatePost />
+        </DialogContent>
+      </Dialog>
+  );
   
   const sidebarContent = (
     <div className="flex flex-col h-full bg-card text-card-foreground">
@@ -72,7 +89,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
            const Icon = item.icon;
            const isActive = pathname.startsWith(item.href) || (pathname === '/home' && item.href === '/home/community');
           return (
-            <Link key={item.href} href={item.href}>
+            <Link key={item.href} href={item.href} onClick={() => isMobileSheetOpen && setIsMobileSheetOpen(false)}>
               <Button
                 variant={isActive ? 'secondary' : 'ghost'}
                 className="w-full justify-start gap-3 text-base h-11"
@@ -91,7 +108,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-3 w-full">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={avatar} />
-                  <AvatarFallback>U</AvatarFallback>
+                  <AvatarFallback>{userProfile?.firstName?.charAt(0) || userProfile?.email?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
                  {isUserLoading ? (
                     <div className="flex-1 flex items-center">
@@ -99,7 +116,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                     </div>
                 ) : (
                 <div className="text-left flex-1 truncate">
-                  <p className="font-semibold text-sm truncate">{userProfile?.firstName || userProfile?.email?.split('@')[0] || 'Usuario'}</p>
+                  <p className="font-semibold text-sm truncate">{`${userProfile?.firstName || ''} ${userProfile?.lastName || ''}`.trim() || userProfile?.email?.split('@')[0] || 'Usuario'}</p>
                   <p className="text-xs text-muted-foreground truncate">{userProfile?.email || 'cargando...'}</p>
                 </div>
                 )}
@@ -134,7 +151,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex flex-col">
           <header className="flex h-16 items-center gap-4 border-b bg-card px-4 lg:px-6 sticky top-0 z-30">
-            <Sheet>
+            <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="shrink-0 md:hidden">
                   <Menu className="h-5 w-5" />
@@ -161,26 +178,6 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                 </form>
                )}
             </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="default" size="icon" className="gap-2 hidden sm:flex rounded-full h-10 w-10">
-                        <PlusSquare className="h-5 w-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Crear publicación</p>
-                    </TooltipContent>
-                </Tooltip>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Crear Publicación</DialogTitle>
-                </DialogHeader>
-                <CreatePost />
-              </DialogContent>
-            </Dialog>
             
             <DropdownMenu onOpenChange={(open) => !open && setShowNotificationDot(false)}>
                 <DropdownMenuTrigger asChild>
@@ -226,6 +223,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
           </header>
           <main className="flex-1 overflow-auto p-4 sm:p-6 bg-background">{children}</main>
+          {pathname === '/home/community' && <MobileCreatePostDialog />}
         </div>
       </div>
     </TooltipProvider>

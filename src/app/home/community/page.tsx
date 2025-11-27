@@ -2,21 +2,14 @@
 "use client";
 
 import React from 'react';
-import { PostCard } from '@/components/post-card';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { PostCard, PostProps } from '@/components/post-card';
 import { CreatePost } from '@/components/create-post';
 import { useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { XCircle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 export default function CommunityPage() {
   const firestore = useFirestore();
@@ -28,57 +21,63 @@ export default function CommunityPage() {
   
   const { data: posts, isLoading } = useCollection(postsQuery);
 
+  const formatPostTime = (timestamp: any) => {
+    if (!timestamp) return 'hace un momento';
+    const date = timestamp.toDate();
+    const now = new Date();
+    const diff = Math.abs(now.getTime() - date.getTime());
+    const diffMinutes = Math.ceil(diff / (1000 * 60));
+    const diffHours = Math.ceil(diff / (1000 * 60 * 60));
+    const diffDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+    if (diffMinutes < 60) return `hace ${diffMinutes} min`;
+    if (diffHours < 24) return `hace ${diffHours} h`;
+    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+  };
+
+
   return (
     <div className="max-w-2xl mx-auto relative">
       <h1 className="font-headline text-3xl font-bold mb-6 sr-only">Comunidad Estudiantil</h1>
       <div className="space-y-4">
-        <CreatePost />
+        <div className='hidden sm:block'>
+          <CreatePost />
+        </div>
+        
         {isLoading && (
           <div className="space-y-4">
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-[150px] w-full" />
+            <Skeleton className="h-[150px] w-full" />
+            <Skeleton className="h-[150px] w-full" />
           </div>
         )}
         {!isLoading && posts && posts.length > 0 ? (
           posts.map((post) => {
-            const postProps = {
+            const postProps: PostProps = {
               id: post.id,
               author: {
                 name: post.authorName,
                 username: post.authorUsername,
                 avatarId: post.authorAvatarId,
               },
-              time: post.createdAt?.toDate().toLocaleDateString() || 'hace un momento',
+              time: formatPostTime(post.createdAt),
               content: post.content,
               stats: {
                 likes: post.likeIds?.length || 0,
                 comments: post.commentIds?.length || 0,
-                reposts: 0, // Reposts need a separate logic
+                reposts: 0,
               }
             };
             return <PostCard key={post.id} {...postProps} />;
           })
         ) : !isLoading && (
-          <div className="text-center text-muted-foreground p-8 mt-4 border-2 border-dashed rounded-lg bg-card">
-            <h3 className="text-xl font-semibold text-foreground">Aún no hay nada por aquí</h3>
-            <p className="mt-2">¡Sé el primero en compartir algo con la comunidad!</p>
-          </div>
+          <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card mt-6">
+                <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                <h3 className="mt-4 text-xl font-semibold text-foreground">Aún no hay nada por aquí</h3>
+                <p className="mt-2">¡Sé el primero en compartir algo con la comunidad!</p>
+            </Card>
         )}
       </div>
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button className="fixed bottom-6 right-6 sm:hidden rounded-full w-14 h-14 shadow-lg">
-            <Plus className="h-6 w-6" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Crear Publicación</DialogTitle>
-          </DialogHeader>
-          <CreatePost />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

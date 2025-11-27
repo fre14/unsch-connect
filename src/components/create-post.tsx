@@ -23,6 +23,11 @@ export function CreatePost() {
 
   const handlePublish = async () => {
     if (!content.trim() || !user || !firestore || !userProfile) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se puede publicar. Asegúrate de haber iniciado sesión y completado tu perfil.",
+      });
       return;
     }
 
@@ -30,9 +35,9 @@ export function CreatePost() {
 
     const newPost = {
       authorId: user.uid,
-      authorName: userProfile.firstName || user.email,
+      authorName: `${userProfile.firstName} ${userProfile.lastName}`.trim() || userProfile.email,
       authorUsername: userProfile.email?.split('@')[0] || 'unknown_user',
-      authorAvatarId: 'user-avatar-main', // This should probably come from userProfile
+      authorAvatarId: 'user-avatar-main', // This should eventually come from userProfile.profilePicture
       content: content,
       postType: 'text',
       createdAt: serverTimestamp(),
@@ -86,7 +91,7 @@ export function CreatePost() {
         <div className="grid grid-cols-[auto,1fr] gap-4">
           <Avatar className="h-12 w-12">
             <AvatarImage src={avatar} />
-            <AvatarFallback>U</AvatarFallback>
+            <AvatarFallback>{userProfile?.firstName?.charAt(0) || 'U'}</AvatarFallback>
           </Avatar>
           <div className="space-y-2">
             <Textarea

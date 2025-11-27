@@ -11,12 +11,35 @@ import { Edit, Mail, Link as LinkIcon, CalendarDays, XCircle, LoaderCircle } fro
 import Link from 'next/link';
 import { useUser } from '@/context/user-context';
 import { Skeleton } from '@/components/ui/skeleton';
-
-const userPosts: PostProps[] = [];
-const reposts: PostProps[] = [];
+import { useCollection, useMemoFirebase, useFirestore, useFirebase } from '@/firebase';
+import { collection, query, where, orderBy } from 'firebase/firestore';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export default function ProfilePage() {
     const { avatar, coverImage, userProfile, isUserLoading } = useUser();
+    const firestore = useFirestore();
+    const { user } = useFirebase();
+
+    const userPostsQuery = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return query(collection(firestore, 'posts'), where("authorId", "==", user.uid), orderBy('createdAt', 'desc'));
+    }, [firestore, user]);
+
+    const { data: userPosts, isLoading: arePostsLoading } = useCollection(userPostsQuery);
+
+     const formatPostTime = (timestamp: any) => {
+        if (!timestamp) return 'hace un momento';
+        const date = timestamp.toDate();
+        const now = new Date();
+        const diff = Math.abs(now.getTime() - date.getTime());
+        const diffMinutes = Math.ceil(diff / (1000 * 60));
+        const diffHours = Math.ceil(diff / (1000 * 60 * 60));
+
+        if (diffMinutes < 60) return `hace ${diffMinutes} min`;
+        if (diffHours < 24) return `hace ${diffHours} h`;
+        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+    };
 
     if (isUserLoading) {
         return (
@@ -71,7 +94,7 @@ export default function ProfilePage() {
                         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
                             {userProfile?.email && <div className="flex items-center gap-1.5"><Mail className="h-4 w-4"/><span>{userProfile.email}</span></div>}
                             <div className="flex items-center gap-1.5"><LinkIcon className="h-4 w-4"/> <a href="#" className="hover:underline">website.com</a></div>
-                            <div className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/><span>Se unió en Julio, 2024</span></div>
+                            <div className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/><span>Se unió en {user?.metadata.creationTime ? format(new Date(user.metadata.creationTime), "MMMM 'de' yyyy", { locale: es }) : '2024'}</span></div>
                         </div>
                         <div className="mt-4 flex gap-6 text-sm">
                             <Link href="#" className="hover:underline"><span className="font-bold text-foreground">120</span> <span className="text-muted-foreground">Seguidores</span></Link>
@@ -88,28 +111,46 @@ export default function ProfilePage() {
                 </TabsList>
                 <TabsContent value="posts">
                     <div className="space-y-6 mt-6">
-                        {userPosts.length > 0 ? userPosts.map((post, index) => (
-                            <PostCard key={index} {...post} />
-                        )) : (
+                        {arePostsLoading ? (
+                            <div className="space-y-4">
+                                <Skeleton className="h-32 w-full" />
+                                <Skeleton className="h-32 w-full" />
+                            </div>
+                        ) : userPosts && userPosts.length > 0 ? (
+                           userPosts.map((post) => {
+                                const postProps: PostProps = {
+                                    id: post.id,
+                                    author: {
+                                        name: post.authorName,
+                                        username: post.authorUsername,
+                                        avatarId: post.authorAvatarId,
+                                    },
+                                    time: formatPostTime(post.createdAt),
+                                    content: post.content,
+                                    stats: {
+                                        likes: post.likeIds?.length || 0,
+                                        comments: post.commentIds?.length || 0,
+                                        reposts: 0,
+                                    }
+                                };
+                                return <PostCard key={post.id} {...postProps} />;
+                            })
+                        ) : (
                             <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card">
                                 <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
                                 <h3 className="mt-4 text-xl font-semibold text-foreground">Sin publicaciones</h3>
-                                <p className="mt-2">Este usuario aún no ha publicado nada.</p>
+                                <p className="mt-2">Aún no has publicado nada. ¡Comparte algo!</p>
                             </Card>
                         )}
                     </div>
                 </TabsContent>
                 <TabsContent value="reposts">
                     <div className="space-y-6 mt-6">
-                        {reposts.length > 0 ? reposts.map((post, index) => (
-                            <PostCard key={index} {...post} />
-                        )) : (
-                             <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card">
-                                <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                                <h3 className="mt-4 text-xl font-semibold text-foreground">Sin reposts</h3>
-                                <p className="mt-2">Este usuario aún no ha compartido ninguna publicación.</p>
-                            </Card>
-                        )}
+                         <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card">
+                            <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                            <h3 className="mt-4 text-xl font-semibold text-foreground">Sin reposts</h3>
+                            <p className="mt-2">Este usuario aún no ha compartido ninguna publicación.</p>
+                        </Card>
                     </div>
                 </TabsContent>
             </Tabs>

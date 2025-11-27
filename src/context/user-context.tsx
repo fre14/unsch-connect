@@ -42,11 +42,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return null;
   }, [firestore, user]);
 
-  const { data: userProfileData, isLoading: isProfileLoading } = useDoc<Omit<UserProfile, 'id'>>(userDocRef);
+  const { data: userProfileData, isLoading: isProfileLoading } = useDoc<DocumentData>(userDocRef);
 
-  const isUserLoading = isAuthLoading || isProfileLoading;
+  const isUserLoading = isAuthLoading || (!!user && isProfileLoading);
   
-  const userProfile: UserProfile | null = user && userProfileData ? { id: user.uid, ...userProfileData } : null;
+  const userProfile: UserProfile | null = useMemo(() => {
+    if (user && userProfileData) {
+        return {
+            id: user.uid,
+            email: user.email!,
+            ...userProfileData
+        } as UserProfile;
+    }
+    return null;
+  }, [user, userProfileData]);
 
   const [avatar, setAvatar] = useState<string>(getImageUrl('user-avatar-main'));
   const [coverImage, setCoverImage] = useState<string>(getImageUrl('aniversary-banner'));
