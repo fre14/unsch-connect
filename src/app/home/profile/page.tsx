@@ -11,11 +11,11 @@ import Link from 'next/link';
 import { useUser } from '@/context/user-context';
 
 const userPosts: PostProps[] = [
-    // Data removed as requested
+    // Data has been removed and should be fetched from a database.
 ];
 
 const reposts: PostProps[] = [
-    // Data removed as requested
+    // Data has been removed and should be fetched from a database.
 ]
 
 export default function ProfilePage() {

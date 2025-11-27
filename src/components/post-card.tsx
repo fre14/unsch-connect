@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MessageCircle, Heart, Repeat, MoreHorizontal, Bookmark, Flag, BadgeCheck } from 'lucide-react';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { getImageUrl, PlaceHolderImages } from '@/lib/placeholder-images';
 
 export type PostProps = {
   id?: string;
@@ -27,14 +27,14 @@ export type PostProps = {
 };
 
 export function PostCard({ author, time, content, imageId, imageAlt, stats, isOfficial = false }: PostProps) {
-  const authorAvatar = PlaceHolderImages.find(img => img.id === author.avatarId);
+  const authorAvatarUrl = getImageUrl(author.avatarId);
   const postImage = imageId ? PlaceHolderImages.find(img => img.id === imageId) : null;
 
   return (
     <Card className="overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
        <div className="p-4 flex gap-4">
         <Avatar className="h-11 w-11">
-          {authorAvatar && <AvatarImage src={authorAvatar.imageUrl} alt={author.name} />}
+          <AvatarImage src={authorAvatarUrl} alt={author.name} />
           <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex-1 space-y-2">
