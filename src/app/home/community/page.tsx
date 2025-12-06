@@ -1,17 +1,19 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { PostCard, PostProps } from '@/components/post-card';
 import { CreatePost } from '@/components/create-post';
 import { useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import { XCircle } from 'lucide-react';
+import { XCircle, Search } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 export default function CommunityPage() {
   const firestore = useFirestore();
+  const [searchTerm, setSearchTerm] = useState('');
 
   const postsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -19,6 +21,19 @@ export default function CommunityPage() {
   }, [firestore]);
   
   const { data: posts, isLoading } = useCollection(postsQuery);
+
+  const filteredPosts = useMemo(() => {
+    if (!posts) return [];
+    if (!searchTerm) return posts;
+    
+    const lowercasedTerm = searchTerm.toLowerCase();
+    
+    return posts.filter(post => 
+      post.content?.toLowerCase().includes(lowercasedTerm) ||
+      post.authorName?.toLowerCase().includes(lowercasedTerm) ||
+      post.authorSchool?.toLowerCase().includes(lowercasedTerm)
+    );
+  }, [posts, searchTerm]);
 
   const formatPostTime = (timestamp: any) => {
     if (!timestamp) return 'hace un momento';
@@ -43,6 +58,17 @@ export default function CommunityPage() {
           <CreatePost />
         </div>
         
+        <div className="relative my-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Buscar publicaciones, personas o carreras..."
+            className="w-full pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
         {isLoading && (
           <div className="space-y-4">
             <Skeleton className="h-[150px] w-full" />
@@ -51,14 +77,15 @@ export default function CommunityPage() {
           </div>
         )}
 
-        {!isLoading && posts && posts.length > 0 && (
-          posts.map((post) => {
+        {!isLoading && filteredPosts && filteredPosts.length > 0 && (
+          filteredPosts.map((post) => {
             const postProps: PostProps = {
               id: post.id,
               author: {
                 name: post.authorName,
                 username: post.authorUsername,
                 avatarId: post.authorAvatarId,
+                school: post.authorSchool
               },
               time: formatPostTime(post.createdAt),
               content: post.content,
@@ -72,11 +99,15 @@ export default function CommunityPage() {
           })
         )}
 
-        {!isLoading && (!posts || posts.length === 0) && (
+        {!isLoading && (!filteredPosts || filteredPosts.length === 0) && (
           <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card mt-6">
                 <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                <h3 className="mt-4 text-xl font-semibold text-foreground">Aún no hay nada por aquí</h3>
-                <p className="mt-2">¡Sé el primero en compartir algo con la comunidad!</p>
+                <h3 className="mt-4 text-xl font-semibold text-foreground">
+                  {searchTerm ? 'No se encontraron resultados' : 'Aún no hay nada por aquí'}
+                </h3>
+                <p className="mt-2">
+                  {searchTerm ? 'Intenta con otra búsqueda o sé el primero en publicar algo.' : '¡Sé el primero en compartir algo con la comunidad!'}
+                </p>
             </Card>
         )}
       </div>

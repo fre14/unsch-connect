@@ -37,6 +37,7 @@ export function CreatePost() {
       authorName: `${userProfile.firstName} ${userProfile.lastName}`.trim() || userProfile.email,
       authorUsername: userProfile.email?.split('@')[0] || 'unknown_user',
       authorAvatarId: 'user-avatar-main',
+      authorSchool: userProfile.school || '', // Denormalize author's school/career
       content: content,
       postType: 'text',
       createdAt: serverTimestamp(),
@@ -47,32 +48,20 @@ export function CreatePost() {
 
     try {
       const postsCollectionRef = collection(firestore, "posts");
-      
       await addDoc(postsCollectionRef, newPost);
-
       setContent("");
       toast({
         title: "¡Publicado!",
         description: "Tu publicación ha sido compartida con la comunidad.",
       });
-
     } catch (error: any) {
-      // Create a specific permission error to be caught globally
       const permissionError = new FirestorePermissionError({
         path: collection(firestore, 'posts').path,
         operation: 'create',
         requestResourceData: newPost,
       });
-      // Emit the error for the global handler to catch
       errorEmitter.emit('permission-error', permissionError);
       
-      // Also show a local toast for immediate user feedback
-      toast({
-        variant: "destructive",
-        title: "Error de publicación",
-        description: "No tienes permiso para crear publicaciones.",
-      });
-      console.error("Error creating post:", error);
     } finally {
       setIsPublishing(false);
     }

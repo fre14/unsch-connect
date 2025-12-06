@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MessageCircle, Heart, Repeat, MoreHorizontal, Bookmark, Flag, BadgeCheck } from 'lucide-react';
+import { MessageCircle, Heart, Repeat, MoreHorizontal, Bookmark, Flag, BadgeCheck, Briefcase } from 'lucide-react';
 import { getImageUrl } from '@/lib/placeholder-images';
 
 export type PostProps = {
@@ -12,6 +12,7 @@ export type PostProps = {
     name: string;
     username: string;
     avatarId: string;
+    school?: string;
   };
   time: string;
   content: string;
@@ -45,7 +46,15 @@ export function PostCard({ id, author, time, content, imageId, imageAlt, stats, 
                         {isOfficial && <BadgeCheck className="h-4 w-4 text-primary" />}
                         <p className="text-sm text-muted-foreground">@{author.username}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{time}</p>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <p>{time}</p>
+                        {author.school && (
+                        <div className="flex items-center gap-1.5">
+                            <Briefcase className="h-3.5 w-3.5" />
+                            <span>{author.school}</span>
+                        </div>
+                        )}
+                    </div>
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>

@@ -132,6 +132,7 @@ export default function ProfilePage() {
                                         name: post.authorName,
                                         username: post.authorUsername,
                                         avatarId: post.authorAvatarId,
+                                        school: post.authorSchool,
                                     },
                                     time: formatPostTime(post.createdAt),
                                     content: post.content,
