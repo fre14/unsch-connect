@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from 'next/image';
@@ -25,7 +24,7 @@ export default function ProfilePage() {
     const { user } = useFirebase();
 
     // Memoize the query to prevent re-creation on every render
-    const userPostsQuery = useMemoFirebase(() => {
+    const allPostsQuery = useMemoFirebase(() => {
         if (!firestore || !user) return null;
         // Query for posts created by the user OR reposted by the user
         return query(collection(firestore, 'posts'), orderBy('createdAt', 'desc'));
