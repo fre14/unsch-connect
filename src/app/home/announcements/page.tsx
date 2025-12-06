@@ -15,7 +15,7 @@ import { XCircle, LoaderCircle, PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useCollection, useMemoFirebase, useFirestore, useFirebase } from '@/firebase';
 import { useUser } from '@/context/user-context';
-import { collection, query, orderBy, where, Query, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -50,7 +50,6 @@ function CreateAnnouncementForm({ setDialogOpen }: { setDialogOpen: (open: boole
             category: data.category,
             publisherId: user.uid,
             createdAt: serverTimestamp(),
-            // Estos campos son requeridos por el schema, los llenamos con valores por defecto
             faculty: 'General', 
             school: 'General',
             course: 'General',
@@ -149,27 +148,32 @@ export default function AnnouncementsPage({ searchTerm: layoutSearchTerm }: { se
 
     const announcementsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        let q: Query = collection(firestore, 'announcements');
-        
-        if (category !== 'all') {
-            q = query(q, where('category', '==', category));
-        }
-        
-        return query(q, orderBy('createdAt', 'desc'));
-    }, [firestore, category]);
+        return query(collection(firestore, 'announcements'), orderBy('createdAt', 'desc'));
+    }, [firestore]);
 
     const { data: rawAnnouncements, isLoading } = useCollection(announcementsQuery);
 
     const filteredAnnouncements = useMemo(() => {
         if (!rawAnnouncements) return [];
-        const lowercasedTerm = searchTerm.toLowerCase();
-        if (!lowercasedTerm) return rawAnnouncements;
+        
+        let announcements = rawAnnouncements;
 
-        return rawAnnouncements.filter(post =>
-            post.content?.toLowerCase().includes(lowercasedTerm) ||
-            post.title?.toLowerCase().includes(lowercasedTerm)
-        );
-    }, [rawAnnouncements, searchTerm]);
+        // Filter by category
+        if (category !== 'all') {
+            announcements = announcements.filter(post => post.category === category);
+        }
+
+        // Filter by search term
+        const lowercasedTerm = searchTerm.toLowerCase();
+        if (lowercasedTerm) {
+            announcements = announcements.filter(post =>
+                post.content?.toLowerCase().includes(lowercasedTerm) ||
+                post.title?.toLowerCase().includes(lowercasedTerm)
+            );
+        }
+        
+        return announcements;
+    }, [rawAnnouncements, searchTerm, category]);
 
     const formatPostTime = (timestamp: any) => {
         if (!timestamp) return 'hace un momento';
@@ -228,7 +232,7 @@ export default function AnnouncementsPage({ searchTerm: layoutSearchTerm }: { se
                     filteredAnnouncements.map((post) => {
                         const postProps: PostProps = {
                             id: post.id,
-                            authorId: post.publisherId, // Anuncios usan publisherId
+                            authorId: post.publisherId,
                             time: formatPostTime(post.createdAt),
                             content: `${post.title ? `**${post.title}**\n\n` : ''}${post.content}`,
                             stats: { likes: 0, comments: 0, reposts: 0 },

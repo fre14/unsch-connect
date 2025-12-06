@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, ChevronLeft, ChevronRight, XCircle, LoaderCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { addDays, format, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, addWeeks, isSameDay, parseISO, isTomorrow } from "date-fns";
+import { addDays, format, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, addWeeks, isSameDay, parseISO, isTomorrow, isWithinInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -260,8 +260,8 @@ export default function SchedulePage() {
     return rawScheduleData.map(item => ({
       ...item,
       id: item.id,
-      date: item.date instanceof Timestamp ? item.date.toDate() : (typeof item.date === 'string' ? parseISO(item.date) : item.date),
-    })) as ScheduleItem[];
+      date: item.date instanceof Timestamp ? item.date.toDate() : (typeof item.date === 'string' ? parseISO(item.date) : new Date(item.date)),
+    })).filter(item => item.date instanceof Date && !isNaN(item.date.valueOf())) as ScheduleItem[];
   }, [rawScheduleData]);
 
   // Effect for notifications
@@ -286,9 +286,8 @@ export default function SchedulePage() {
     const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
 
     scheduleItems.forEach(item => {
-        const itemDate = item.date;
-        if (itemDate >= weekStart && itemDate <= weekEnd) {
-            const dayName = format(itemDate, 'eeee', { locale: es }).toLowerCase();
+        if (isWithinInterval(item.date, { start: weekStart, end: weekEnd })) {
+            const dayName = format(item.date, 'eeee', { locale: es }).toLowerCase();
             if (data[dayName]) {
                 data[dayName].push(item);
             }
