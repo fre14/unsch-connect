@@ -6,15 +6,19 @@ import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MessageCircle, Heart, Repeat, MoreHorizontal, Bookmark, Flag, BadgeCheck, Briefcase, LoaderCircle } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { MessageCircle, Heart, Repeat, MoreHorizontal, Bookmark, Flag, BadgeCheck, Briefcase, Trash2 } from 'lucide-react';
 import { getImageUrl } from '@/lib/placeholder-images';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc, DocumentData } from 'firebase/firestore';
-import { useFirestore, useMemoFirebase } from '@/firebase';
+import { doc, DocumentData, deleteDoc } from 'firebase/firestore';
+import { useFirestore, useMemoFirebase, useFirebase } from '@/firebase';
+import { toast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export type PostProps = {
-  id?: string;
+  id: string; // ID is now mandatory for deletion
   authorId: string;
   time: string;
   content: string;
@@ -43,6 +47,10 @@ function useAuthorProfile(authorId: string) {
 
 export function PostCard({ id, authorId, time, content, imageId, imageAlt, stats, isOfficial = false }: PostProps) {
   const { authorProfile, isLoading } = useAuthorProfile(authorId);
+  const { user } = useFirebase();
+  const firestore = useFirestore();
+  const isAuthor = user?.uid === authorId;
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const postImageUrl = imageId ? getImageUrl(imageId) : null;
   
@@ -50,6 +58,33 @@ export function PostCard({ id, authorId, time, content, imageId, imageAlt, stats
   const authorUsername = authorProfile ? authorProfile.email?.split('@')[0] : '...';
   const authorAvatarUrl = authorProfile?.profilePicture || getImageUrl('default-user-avatar');
   const authorSchool = authorProfile?.school;
+
+  const handleDelete = async () => {
+    if (!firestore || !id) return;
+
+    setIsDeleting(true);
+    const postDocRef = doc(firestore, 'posts', id);
+
+    deleteDoc(postDocRef)
+      .then(() => {
+        toast({ title: 'Publicación eliminada', description: 'Tu publicación ha sido eliminada correctamente.' });
+      })
+      .catch((error) => {
+        const permissionError = new FirestorePermissionError({
+          path: postDocRef.path,
+          operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'No se pudo eliminar la publicación.',
+        });
+      })
+      .finally(() => {
+        setIsDeleting(false);
+      });
+  };
 
   if (isLoading) {
     return (
@@ -90,17 +125,43 @@ export function PostCard({ id, authorId, time, content, imageId, imageAlt, stats
                         )}
                     </div>
                 </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Más opciones">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem><Bookmark className="mr-2 h-4 w-4" /> Guardar</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive-foreground focus:bg-destructive/90"><Flag className="mr-2 h-4 w-4" /> Reportar</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <AlertDialog>
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Más opciones">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                          <DropdownMenuItem><Bookmark className="mr-2 h-4 w-4" /> Guardar</DropdownMenuItem>
+                          <DropdownMenuItem><Flag className="mr-2 h-4 w-4" /> Reportar</DropdownMenuItem>
+                          {isAuthor && (
+                            <>
+                              <DropdownMenuSeparator />
+                               <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-destructive focus:text-destructive-foreground focus:bg-destructive/90">
+                                  <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                            </>
+                          )}
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta acción no se puede deshacer. Esto eliminará permanentemente tu publicación de nuestros servidores.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                        {isDeleting ? 'Eliminando...' : 'Eliminar'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
             </div>
             <p className="whitespace-pre-wrap text-base">{content}</p>
             {postImageUrl && imageAlt && (
