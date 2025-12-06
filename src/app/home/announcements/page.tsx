@@ -28,7 +28,7 @@ export default function AnnouncementsPage() {
         if (searchTerm) {
             announcements = announcements.filter(post =>
                 post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                post.author.name.toLowerCase().includes(searchTerm.toLowerCase())
+                (post.author && post.author.name.toLowerCase().includes(searchTerm.toLowerCase()))
             );
         }
         
