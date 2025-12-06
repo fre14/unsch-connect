@@ -3,16 +3,143 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PostCard, PostProps } from '@/components/post-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { XCircle, LoaderCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { XCircle, LoaderCircle, PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { useCollection, useMemoFirebase, useFirestore } from '@/firebase';
-import { collection, query, orderBy, where, Query } from 'firebase/firestore';
+import { useCollection, useMemoFirebase, useFirestore, useFirebase } from '@/firebase';
+import { useUser } from '@/context/user-context';
+import { collection, query, orderBy, where, Query, addDoc, serverTimestamp } from 'firebase/firestore';
+import { toast } from '@/hooks/use-toast';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
+
+const announcementSchema = z.object({
+  title: z.string().min(1, 'El título es requerido.'),
+  content: z.string().min(1, 'El contenido es requerido.'),
+  category: z.enum(['rectorado', 'facultad', 'admision'], { required_error: 'La categoría es requerida.' }),
+});
+
+type AnnouncementFormValues = z.infer<typeof announcementSchema>;
+
+function CreateAnnouncementForm({ setDialogOpen }: { setDialogOpen: (open: boolean) => void }) {
+    const { user } = useFirebase();
+    const firestore = useFirestore();
+
+    const form = useForm<AnnouncementFormValues>({
+        resolver: zodResolver(announcementSchema),
+    });
+
+    async function onSubmit(data: AnnouncementFormValues) {
+        if (!user || !firestore) {
+            toast({ variant: "destructive", title: "Error", description: "Debes iniciar sesión para crear un anuncio." });
+            return;
+        }
+
+        const announcementCollectionRef = collection(firestore, "announcements");
+        
+        const newAnnouncement = {
+            title: data.title,
+            content: data.content,
+            category: data.category,
+            publisherId: user.uid,
+            createdAt: serverTimestamp(),
+            // Estos campos son requeridos por el schema, los llenamos con valores por defecto
+            faculty: 'General', 
+            school: 'General',
+            course: 'General',
+        };
+
+        try {
+            await addDoc(announcementCollectionRef, newAnnouncement);
+            toast({ title: "Anuncio publicado", description: "El anuncio ahora es visible para todos." });
+            form.reset();
+            setDialogOpen(false);
+        } catch (error) {
+            const permissionError = new FirestorePermissionError({
+                path: announcementCollectionRef.path,
+                operation: 'create',
+                requestResourceData: newAnnouncement,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        }
+    }
+    
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Título del Anuncio</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Ej: Suspensión de clases" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Contenido del Anuncio</FormLabel>
+                            <FormControl>
+                                <Textarea placeholder="Detalles del anuncio..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Categoría</FormLabel>
+                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecciona una categoría" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="rectorado">Rectorado</SelectItem>
+                                    <SelectItem value="facultad">Facultad</SelectItem>
+                                    <SelectItem value="admision">Admisión</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <Button type="submit" className="w-full !mt-6" disabled={form.formState.isSubmitting}>
+                     {form.formState.isSubmitting ? 'Publicando...' : 'Publicar Anuncio'}
+                </Button>
+            </form>
+        </Form>
+    );
+}
+
 
 export default function AnnouncementsPage() {
     const searchParams = useSearchParams();
     const firestore = useFirestore();
+    const { userProfile } = useUser();
     const [category, setCategory] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+
+    const canCreateAnnouncement = userProfile?.role === 'official' || userProfile?.role === 'admin';
 
     useEffect(() => {
         setSearchTerm(searchParams.get('search') || '');
@@ -71,6 +198,22 @@ export default function AnnouncementsPage() {
                             <SelectItem value="admision">Admisión</SelectItem>
                         </SelectContent>
                     </Select>
+                     {canCreateAnnouncement && (
+                        <Dialog open={isCreateDialogOpen} onOpenChange={setCreateDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button className="gap-2">
+                                    <PlusCircle className="h-5 w-5" />
+                                    <span className="hidden sm:inline">Crear Anuncio</span>
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Crear Nuevo Anuncio</DialogTitle>
+                                </DialogHeader>
+                                <CreateAnnouncementForm setDialogOpen={setCreateDialogOpen} />
+                            </DialogContent>
+                        </Dialog>
+                    )}
                 </div>
             </div>
             <div className="space-y-4">
@@ -83,11 +226,7 @@ export default function AnnouncementsPage() {
                     filteredAnnouncements.map((post) => {
                         const postProps: PostProps = {
                             id: post.id,
-                            author: {
-                                name: post.authorName || "Comunicado Oficial",
-                                username: post.authorUsername || "unsch",
-                                avatarId: post.authorAvatarId || 'rector-avatar',
-                            },
+                            authorId: post.publisherId, // Anuncios usan publisherId
                             time: formatPostTime(post.createdAt),
                             content: `${post.title ? `**${post.title}**\n\n` : ''}${post.content}`,
                             stats: { likes: 0, comments: 0, reposts: 0 },
@@ -106,3 +245,4 @@ export default function AnnouncementsPage() {
         </div>
     );
 }
+    
