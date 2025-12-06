@@ -3,7 +3,7 @@
     {
       "id": "default-user-avatar",
       "description": "Default user avatar when no profile picture is set",
-      "imageUrl": "https://storage.googleapis.com/studioprototyper/users/unsch-connect/assets/default_avatar.png",
+      "imageUrl": "https://storage.googleapis.com/studioprototyper/users/unsch-connect/assets/avatar_default.png",
       "imageHint": "avatar placeholder"
     },
     {

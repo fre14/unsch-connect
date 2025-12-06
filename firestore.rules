@@ -23,13 +23,13 @@ service cloud.firestore {
      * @path /posts/{postId}
      */
     match /posts/{postId} {
-      // Regla #1: Lectura pública para cualquier documento y la colección.
+      // Rule #1: Public read access for any document and the collection.
       allow read: if true;
 
-      // Regla #2: La creación de posts solo para usuarios autenticados.
+      // Rule #2: Post creation is only for authenticated users.
       allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
       
-      // Regla #3: La actualización y borrado solo para el autor del post.
+      // Rule #3: Updating and deleting is only for the post's author.
       allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
     }
 
