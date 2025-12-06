@@ -36,15 +36,14 @@ export function CreatePost() {
 
     setIsPublishing(true);
 
-    // El objeto de post ahora es mucho más simple. Solo almacenamos el authorId.
-    // El resto de la información del perfil se obtendrá en tiempo real.
     const newPost = {
       authorId: user.uid,
       content: content,
       postType: 'text',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-      likeIds: [],
+      likedBy: [],
+      repostedBy: [],
       commentIds: [],
     };
 

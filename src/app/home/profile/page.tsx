@@ -27,18 +27,24 @@ export default function ProfilePage() {
     const allPostsQuery = useMemoFirebase(() => {
         if (!firestore || !user) return null;
         // Query for posts created by the user OR reposted by the user
-        return query(collection(firestore, 'posts'), where('authorId', '==', user.uid), orderBy('createdAt', 'desc'));
+        return query(collection(firestore, 'posts'), where('authorId', '==', user.uid));
     }, [firestore, user]);
 
-    const { data: userCreatedPosts, isLoading: arePostsLoading } = useCollection<DocumentData>(allPostsQuery);
+    const { data: allUserActivity, isLoading: arePostsLoading } = useCollection<DocumentData>(allPostsQuery);
 
     const { userPosts, userReposts } = useMemo(() => {
-        if (!userCreatedPosts) return { userPosts: [], userReposts: [] };
+        if (!allUserActivity) return { userPosts: [], userReposts: [] };
         // post.originalPostId exists on reposts
-        const posts = userCreatedPosts.filter(post => !post.originalPostId);
-        const reposts = userCreatedPosts.filter(post => !!post.originalPostId);
+        const posts = allUserActivity.filter(post => !post.originalPostId);
+        const reposts = allUserActivity.filter(post => !!post.originalPostId);
+        
+        // Sort both arrays by creation date
+        const sortByDate = (a: DocumentData, b: DocumentData) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0);
+        posts.sort(sortByDate);
+        reposts.sort(sortByDate);
+
         return { userPosts: posts, userReposts: reposts };
-    }, [userCreatedPosts]);
+    }, [allUserActivity]);
 
      const formatPostTime = (timestamp: any) => {
         if (!timestamp) return 'hace un momento';

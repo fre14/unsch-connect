@@ -10,48 +10,6 @@ import { XCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { formatPostTime } from '@/lib/utils';
 
-// Hook para obtener perfiles de autor para el filtrado
-function useAuthorProfiles(authorIds: string[]) {
-  const firestore = useFirestore();
-  const [authorProfiles, setAuthorProfiles] = useState<Record<string, DocumentData | null>>({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!firestore || authorIds.length === 0) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchProfiles = async () => {
-      setLoading(true);
-      const profiles: Record<string, DocumentData | null> = {};
-      const profilePromises = authorIds.map(id => {
-        const docRef = doc(firestore, 'userProfiles', id);
-        // This is a simplified fetch, in a real app use getDoc with proper error handling
-        // For the purpose of this fix, we'll assume a simplified hook usage.
-        return new Promise(resolve => {
-            const {data} = useDoc(docRef);
-            if (data) {
-                profiles[id] = data;
-            }
-            resolve(true);
-        })
-      });
-
-      await Promise.all(profilePromises);
-
-      setAuthorProfiles(profiles);
-      setLoading(false);
-    };
-
-    fetchProfiles();
-
-  }, [firestore, authorIds]);
-  
-  return { authorProfiles, loadingAuthors: loading };
-}
-
-
 // La página ahora recibe el `searchTerm` como prop desde `layout.tsx`
 export default function CommunityPage({ searchTerm }: { searchTerm: string }) {
   const firestore = useFirestore();
@@ -74,15 +32,6 @@ export default function CommunityPage({ searchTerm }: { searchTerm: string }) {
         return dateB - dateA;
       });
   }, [rawPosts])
-
-  const authorIds = useMemo(() => {
-    if (!posts) return [];
-    const ids = posts.map(post => post.authorId);
-    return [...new Set(ids)]; // Unique IDs
-  }, [posts]);
-
-  // This is a placeholder, a full implementation would use getDocs and be more robust.
-  // const { authorProfiles } = useAuthorProfiles(authorIds);
 
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
