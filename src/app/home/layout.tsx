@@ -26,20 +26,18 @@ const navItems = [
   { href: '/home/profile', label: 'Perfil', icon: User },
 ];
 
-const notifications = [
-    { text: 'Admisión UNSCH ha publicado un nuevo anuncio.', time: 'hace 5 minutos', avatarId: 'admision-avatar' },
-    { text: 'A Juan Pérez le ha gustado tu publicación.', time: 'hace 1 hora', avatarId: 'user-avatar-1' },
-    { text: 'El Rectorado ha emitido un comunicado importante.', time: 'hace 3 horas', avatarId: 'rector-avatar' },
+const notifications: any[] = [
+    // { text: 'Admisión UNSCH ha publicado un nuevo anuncio.', time: 'hace 5 minutos', avatarId: 'admision-avatar' },
+    // { text: 'A Juan Pérez le ha gustado tu publicación.', time: 'hace 1 hora', avatarId: 'user-avatar-1' },
+    // { text: 'El Rectorado ha emitido un comunicado importante.', time: 'hace 3 horas', avatarId: 'rector-avatar' },
 ];
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const auth = useAuth();
-  const [searchTerm, setSearchTerm] = React.useState(searchParams.get('search') || '');
   const { avatar, userProfile, isUserLoading } = useUser();
-  const [showNotificationDot, setShowNotificationDot] = React.useState(true);
+  const [showNotificationDot, setShowNotificationDot] = React.useState(notifications.length > 0);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = React.useState(false);
 
   const handleLogout = async () => {
@@ -49,25 +47,17 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // For client-side filtering, we just pass the search term down.
-    // For server-side, we would update the URL.
-    if (pathname.startsWith('/home/announcements')) {
-      const params = new URLSearchParams(searchParams);
-      if (searchTerm) {
-        params.set('search', searchTerm);
-      } else {
-        params.delete('search');
-      }
-      router.replace(`${pathname}?${params.toString()}`);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value;
+    const params = new URLSearchParams(window.location.search);
+    if (term) {
+      params.set('q', term);
+    } else {
+      params.delete('q');
     }
+    // We use replace to avoid adding to browser history
+    router.replace(`${pathname}?${params.toString()}`);
   };
-  
-  // Pass searchTerm to children if it's a valid React element
-  const childrenWithProps = React.isValidElement(children)
-    ? React.cloneElement(children as React.ReactElement<any>, { searchTerm })
-    : children;
 
   const MobileCreatePostDialog = () => (
     <Dialog>
@@ -159,20 +149,19 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     } else if (pathname.startsWith('/home/community')) {
       placeholder = "Buscar publicaciones, personas...";
     }
+    const searchParams = useSearchParams();
 
     return (
-      <form onSubmit={handleSearch}>
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
             placeholder={placeholder}
             className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            defaultValue={searchParams.get('q') || ''}
+            onChange={handleSearchChange}
           />
         </div>
-      </form>
     );
   };
 
@@ -237,14 +226,14 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                        <p className="p-4 text-sm text-center text-muted-foreground">No tienes notificaciones nuevas.</p>
                     )}
                     <DropdownMenuSeparator />
-                     <DropdownMenuItem className="justify-center text-sm text-primary hover:!bg-accent">
+                     <DropdownMenuItem className="justify-center text-sm text-primary hover:!bg-accent cursor-pointer">
                         Ver todas las notificaciones
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 
           </header>
-          <main className="flex-1 overflow-auto p-4 sm:p-6 bg-background">{childrenWithProps}</main>
+          <main className="flex-1 overflow-auto p-4 sm:p-6 bg-background">{children}</main>
           {pathname.startsWith('/home/community') && <MobileCreatePostDialog />}
         </div>
       </div>
@@ -259,5 +248,3 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </UserProvider>
   )
 }
-
-    

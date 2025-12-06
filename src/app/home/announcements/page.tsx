@@ -134,19 +134,16 @@ function CreateAnnouncementForm({ setDialogOpen }: { setDialogOpen: (open: boole
 }
 
 
-export default function AnnouncementsPage({ searchTerm: layoutSearchTerm }: { searchTerm: string }) {
+export default function AnnouncementsPage() {
     const searchParams = useSearchParams();
     const firestore = useFirestore();
     const { userProfile } = useUser();
     const [category, setCategory] = useState('all');
-    const [searchTerm, setSearchTerm] = useState('');
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
 
     const canCreateAnnouncement = userProfile?.role === 'official' || userProfile?.role === 'admin';
-
-    useEffect(() => {
-        setSearchTerm(layoutSearchTerm || searchParams.get('search') || '');
-    }, [layoutSearchTerm, searchParams]);
+    
+    const searchTerm = searchParams.get('q') || '';
 
     const announcementsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -160,12 +157,10 @@ export default function AnnouncementsPage({ searchTerm: layoutSearchTerm }: { se
         
         let results = rawAnnouncements;
 
-        // 1. Filter by category
         if (category !== 'all') {
             results = results.filter(post => post.category === category);
         }
 
-        // 2. Filter by search term
         if (searchTerm) {
             const lowercasedTerm = searchTerm.toLowerCase();
             results = results.filter(post => 
@@ -233,8 +228,12 @@ export default function AnnouncementsPage({ searchTerm: layoutSearchTerm }: { se
                 ) : (
                     <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card">
                         <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                        <h3 className="mt-4 text-xl font-semibold text-foreground">No se encontraron anuncios</h3>
-                        <p className="mt-2">Intenta ajustar tu búsqueda o filtro para encontrar lo que buscas.</p>
+                        <h3 className="mt-4 text-xl font-semibold text-foreground">
+                            {searchTerm || category !== 'all' ? 'No se encontraron anuncios' : 'No hay anuncios aún'}
+                        </h3>
+                        <p className="mt-2">
+                             {searchTerm || category !== 'all' ? 'Intenta ajustar tu búsqueda o filtro.' : 'Vuelve más tarde para ver las últimas noticias.'}
+                        </p>
                     </Card>
                 )}
             </div>
