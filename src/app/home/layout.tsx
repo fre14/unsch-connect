@@ -56,8 +56,16 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     } else {
       params.delete('search');
     }
-    router.replace(`${pathname}?${params.toString()}`);
+    // For community page, we handle search client-side, so no need to push to router
+    if (pathname !== '/home/community') {
+      router.replace(`${pathname}?${params.toString()}`);
+    }
   };
+
+  // Pass searchTerm to children if it's a valid React element
+  const childrenWithProps = React.isValidElement(children)
+    ? React.cloneElement(children as React.ReactElement<any>, { searchTerm })
+    : children;
 
   const MobileCreatePostDialog = () => (
     <Dialog>
@@ -142,6 +150,30 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     </div>
   );
 
+  const SearchBar = () => {
+    let placeholder = "Buscar...";
+    if (pathname === '/home/announcements') {
+      placeholder = "Buscar en anuncios...";
+    } else if (pathname === '/home/community') {
+      placeholder = "Buscar publicaciones, personas o carreras...";
+    }
+
+    return (
+      <form onSubmit={handleSearch}>
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder={placeholder}
+            className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </form>
+    );
+  };
+
   return (
     <TooltipProvider>
       <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -162,20 +194,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
               </SheetContent>
             </Sheet>
             <div className="w-full flex-1">
-               {pathname === '/home/announcements' && (
-                 <form onSubmit={handleSearch}>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="search"
-                      placeholder="Buscar en anuncios..."
-                      className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                </form>
-               )}
+               {(pathname === '/home/announcements' || pathname === '/home/community') && <SearchBar />}
             </div>
             
             <DropdownMenu onOpenChange={(open) => !open && setShowNotificationDot(false)}>
@@ -221,7 +240,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             </DropdownMenu>
 
           </header>
-          <main className="flex-1 overflow-auto p-4 sm:p-6 bg-background">{children}</main>
+          <main className="flex-1 overflow-auto p-4 sm:p-6 bg-background">{childrenWithProps}</main>
           {pathname === '/home/community' && <MobileCreatePostDialog />}
         </div>
       </div>

@@ -1,19 +1,17 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { PostCard, PostProps } from '@/components/post-card';
 import { CreatePost } from '@/components/create-post';
 import { useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import { XCircle, Search } from 'lucide-react';
+import { XCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 
-export default function CommunityPage() {
+export default function CommunityPage({ searchTerm }: { searchTerm: string }) {
   const firestore = useFirestore();
-  const [searchTerm, setSearchTerm] = useState('');
 
   const postsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -57,19 +55,8 @@ export default function CommunityPage() {
           <CreatePost />
         </div>
         
-        <div className="relative my-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar publicaciones, personas o carreras..."
-            className="w-full pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
         {isLoading ? (
-          <div className="space-y-4">
+          <div className="space-y-4 pt-6">
             <Skeleton className="h-[150px] w-full" />
             <Skeleton className="h-[150px] w-full" />
             <Skeleton className="h-[150px] w-full" />
