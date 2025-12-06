@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { XCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
+// La página ahora recibe el `searchTerm` como prop desde `layout.tsx`
 export default function CommunityPage({ searchTerm }: { searchTerm: string }) {
   const firestore = useFirestore();
 
@@ -18,18 +19,18 @@ export default function CommunityPage({ searchTerm }: { searchTerm: string }) {
     return query(collection(firestore, 'posts'), orderBy('createdAt', 'desc'));
   }, [firestore]);
   
+  // El hook se mantiene igual, pero los datos se filtrarán de forma diferente.
   const { data: posts, isLoading } = useCollection(postsQuery);
 
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
     if (!searchTerm) return posts;
     
+    // El filtrado ahora es más simple, ya que no necesitamos los datos denormalizados del autor aquí.
     const lowercasedTerm = searchTerm.toLowerCase();
     
     return posts.filter(post => 
-      post.content?.toLowerCase().includes(lowercasedTerm) ||
-      post.authorName?.toLowerCase().includes(lowercasedTerm) ||
-      post.authorSchool?.toLowerCase().includes(lowercasedTerm)
+      post.content?.toLowerCase().includes(lowercasedTerm)
     );
   }, [posts, searchTerm]);
 
@@ -63,14 +64,10 @@ export default function CommunityPage({ searchTerm }: { searchTerm: string }) {
           </div>
         ) : filteredPosts.length > 0 ? (
           filteredPosts.map((post) => {
+            // Pasamos solo el authorId a PostCard, que ahora se encarga de obtener los datos.
             const postProps: PostProps = {
               id: post.id,
-              author: {
-                name: post.authorName,
-                username: post.authorUsername,
-                avatarId: post.authorAvatarId,
-                school: post.authorSchool
-              },
+              authorId: post.authorId,
               time: formatPostTime(post.createdAt),
               content: post.content,
               stats: {

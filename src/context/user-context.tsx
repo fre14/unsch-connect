@@ -17,6 +17,9 @@ interface UserProfile {
   cycle: string;
   profilePicture: string;
   description: string;
+  website?: string;
+  followers?: string[];
+  following?: string[];
   role: 'student_teacher' | 'official' | 'admin';
 }
 

@@ -104,7 +104,19 @@ export default function ProfilePage() {
                         </p>
                         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
                             {userProfile?.email && <div className="flex items-center gap-1.5"><Mail className="h-4 w-4"/><span>{userProfile.email}</span></div>}
-                            <div className="flex items-center gap-1.5"><LinkIcon className="h-4 w-4"/> <a href="#" className="hover:underline">website.com</a></div>
+                            {userProfile?.website && (
+                                <div className="flex items-center gap-1.5">
+                                    <LinkIcon className="h-4 w-4"/> 
+                                    <a 
+                                        href={!userProfile.website.startsWith('http') ? `https://${userProfile.website}` : userProfile.website} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="hover:underline text-accent"
+                                    >
+                                        {userProfile.website.replace(/^(https?:\/\/)/, '')}
+                                    </a>
+                                </div>
+                            )}
                             <div className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/><span>Se unió en {user?.metadata.creationTime ? format(new Date(user.metadata.creationTime), "MMMM 'de' yyyy", { locale: es }) : '2024'}</span></div>
                         </div>
                         <div className="mt-4 flex gap-6 text-sm">
@@ -131,12 +143,7 @@ export default function ProfilePage() {
                            userPosts.map((post) => {
                                 const postProps: PostProps = {
                                     id: post.id,
-                                    author: {
-                                        name: post.authorName,
-                                        username: post.authorUsername,
-                                        avatarId: post.authorAvatarId,
-                                        school: post.authorSchool,
-                                    },
+                                    authorId: post.authorId,
                                     time: formatPostTime(post.createdAt),
                                     content: post.content,
                                     stats: {
@@ -169,5 +176,3 @@ export default function ProfilePage() {
         </div>
     )
 }
-
-    

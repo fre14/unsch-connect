@@ -36,12 +36,10 @@ export function CreatePost() {
 
     setIsPublishing(true);
 
+    // El objeto de post ahora es mucho más simple. Solo almacenamos el authorId.
+    // El resto de la información del perfil se obtendrá en tiempo real.
     const newPost = {
       authorId: user.uid,
-      authorName: `${userProfile.firstName} ${userProfile.lastName}`.trim() || userProfile.email,
-      authorUsername: userProfile.email?.split('@')[0] || 'unknown_user',
-      authorAvatarId: 'user-avatar-main',
-      authorSchool: userProfile.school || '', // Denormalize author's school/career
       content: content,
       postType: 'text',
       createdAt: serverTimestamp(),

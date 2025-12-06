@@ -24,6 +24,7 @@ const profileSchema = z.object({
     firstName: z.string().min(1, "El nombre es requerido."),
     lastName: z.string().min(1, "El apellido es requerido."),
     description: z.string().max(160, "La biografía no puede exceder los 160 caracteres.").optional(),
+    website: z.string().url("Debe ser una URL válida.").or(z.literal("")).optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -39,6 +40,7 @@ export default function SettingsPage() {
             firstName: "",
             lastName: "",
             description: "",
+            website: "",
         }
     });
 
@@ -48,6 +50,7 @@ export default function SettingsPage() {
                 firstName: userProfile.firstName || "",
                 lastName: userProfile.lastName || "",
                 description: userProfile.description || "",
+                website: userProfile.website || "",
             });
         }
     }, [userProfile, form]);
@@ -63,7 +66,8 @@ export default function SettingsPage() {
             firstName: data.firstName,
             lastName: data.lastName,
             description: data.description,
-            profilePicture: avatar, // Assuming avatar state is the source of truth
+            website: data.website,
+            profilePicture: avatar, 
             // coverImage: coverImage // Add this if you have a coverImage field in firestore
         };
 
@@ -145,6 +149,19 @@ export default function SettingsPage() {
                                     <FormLabel>Biografía</FormLabel>
                                     <FormControl>
                                         <Textarea placeholder="Cuéntanos un poco sobre ti..." {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="website"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Sitio Web / Red Social</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="https://tu-portfolio.com" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
