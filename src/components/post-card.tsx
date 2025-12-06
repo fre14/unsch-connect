@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { MessageCircle, Heart, Repeat, MoreHorizontal, Bookmark, Flag, BadgeCheck, Briefcase, Trash2, LoaderCircle } from 'lucide-react';
+import { MessageCircle, Heart, Repeat, MoreHorizontal, Flag, BadgeCheck, Briefcase, Trash2, LoaderCircle } from 'lucide-react';
 import { getImageUrl } from '@/lib/placeholder-images';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { doc, DocumentData, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
@@ -160,6 +160,14 @@ export function PostCard(props: PostProps) {
     const { user } = useFirebase();
     const firestore = useFirestore();
 
+    const commentsQuery = useMemoFirebase(() => {
+        if (!firestore || !id) return null;
+        return query(collection(firestore, 'posts', id, 'comments'));
+    }, [firestore, id]);
+
+    const { data: comments } = useCollection(commentsQuery);
+    const commentCount = comments?.length || 0;
+
     // Determine which author ID to use (original for reposts, own for original posts)
     const displayAuthorId = originalAuthorId || authorId;
     const { authorProfile, isLoading: isAuthorLoading } = useAuthorProfile(displayAuthorId);
@@ -299,7 +307,6 @@ export function PostCard(props: PostProps) {
                       <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Más opciones"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                              <DropdownMenuItem><Bookmark className="mr-2 h-4 w-4" /> Guardar</DropdownMenuItem>
                               <DropdownMenuItem><Flag className="mr-2 h-4 w-4" /> Reportar</DropdownMenuItem>
                               {isAuthor && (
                                 <>
@@ -335,7 +342,7 @@ export function PostCard(props: PostProps) {
                         <DialogTrigger asChild>
                              <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" aria-label="Comentarios">
                                 <MessageCircle className="h-5 w-5" />
-                                <span className="text-sm">0</span>
+                                <span className="text-sm">{commentCount}</span>
                             </Button>
                         </DialogTrigger>
                        <CommentsDialog postId={id} />
@@ -348,12 +355,13 @@ export function PostCard(props: PostProps) {
                         <Heart className={`h-5 w-5 ${hasLiked ? 'fill-current text-red-500' : ''}`} />
                         <span className="text-sm">{likeCount}</span>
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" aria-label="Guardar publicación"><Bookmark className="h-5 w-5" /></Button>
                 </div>
             </div>
           </div>
         </Card>
     );
 }
+
+    
 
     

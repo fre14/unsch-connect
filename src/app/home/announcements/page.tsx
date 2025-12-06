@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -157,15 +158,24 @@ export default function AnnouncementsPage({ searchTerm: layoutSearchTerm }: { se
     const filteredAnnouncements = useMemo(() => {
         if (!rawAnnouncements) return [];
         
-        const lowercasedTerm = searchTerm.toLowerCase();
+        let results = rawAnnouncements;
 
-        return rawAnnouncements.filter(post => {
-            const categoryMatch = category === 'all' || post.category === category;
-            const searchMatch = !lowercasedTerm || 
+        // 1. Filter by category
+        if (category !== 'all') {
+            results = results.filter(post => post.category === category);
+        }
+
+        // 2. Filter by search term
+        if (searchTerm) {
+            const lowercasedTerm = searchTerm.toLowerCase();
+            results = results.filter(post => 
                 post.content?.toLowerCase().includes(lowercasedTerm) ||
-                post.title?.toLowerCase().includes(lowercasedTerm);
-            return categoryMatch && searchMatch;
-        });
+                post.title?.toLowerCase().includes(lowercasedTerm)
+            );
+        }
+
+        return results;
+
     }, [rawAnnouncements, searchTerm, category]);
 
     return (
@@ -232,4 +242,6 @@ export default function AnnouncementsPage({ searchTerm: layoutSearchTerm }: { se
     );
 }
     
+    
+
     
