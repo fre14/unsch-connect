@@ -11,21 +11,30 @@ import Link from 'next/link';
 import { useUser } from '@/context/user-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useMemoFirebase, useFirestore, useFirebase } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import React, { useMemo } from 'react';
 
 export default function ProfilePage() {
     const { avatar, coverImage, userProfile, isUserLoading } = useUser();
     const firestore = useFirestore();
     const { user } = useFirebase();
 
-    const userPostsQuery = useMemoFirebase(() => {
-        if (!firestore || !user) return null;
-        return query(collection(firestore, 'posts'), where("authorId", "==", user.uid), orderBy('createdAt', 'desc'));
-    }, [firestore, user]);
+    const postsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        // Fetch all posts and filter on the client-side
+        return query(collection(firestore, 'posts'), orderBy('createdAt', 'desc'));
+    }, [firestore]);
 
-    const { data: userPosts, isLoading: arePostsLoading } = useCollection(userPostsQuery);
+    const { data: allPosts, isLoading: arePostsLoading } = useCollection(postsQuery);
+    
+    // Filter posts on the client-side
+    const userPosts = useMemo(() => {
+        if (!allPosts || !user) return [];
+        return allPosts.filter(post => post.authorId === user.uid);
+    }, [allPosts, user]);
+
 
      const formatPostTime = (timestamp: any) => {
         if (!timestamp) return 'hace un momento';
