@@ -38,14 +38,14 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allow public read access to posts.
+     * @description Allow authenticated users to list all posts and read individual ones.
      * Writes are restricted:
      * - Create: Only by the author.
      * - Update: Author can edit content. Any user can update 'likedBy' or 'repostedBy'.
      * - Delete: Only by the author.
      */
     match /posts/{postId} {
-      allow read: if true;
+      allow get, list: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
       // Allow author to update everything.
       // Allow any authenticated user to update ONLY the likedBy or repostedBy fields.
