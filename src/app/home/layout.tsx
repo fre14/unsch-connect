@@ -50,14 +50,15 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const params = new URLSearchParams(searchParams);
-    if (searchTerm) {
-      params.set('search', searchTerm);
-    } else {
-      params.delete('search');
-    }
-    // Only push to router for pages that handle server-side search
+    // For client-side filtering, we just pass the search term down.
+    // For server-side, we would update the URL.
     if (pathname.startsWith('/home/announcements')) {
+      const params = new URLSearchParams(searchParams);
+      if (searchTerm) {
+        params.set('search', searchTerm);
+      } else {
+        params.delete('search');
+      }
       router.replace(`${pathname}?${params.toString()}`);
     }
   };
@@ -155,7 +156,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith('/home/announcements')) {
       placeholder = "Buscar en anuncios...";
     } else if (pathname.startsWith('/home/community')) {
-      placeholder = "Buscar publicaciones, personas o carreras...";
+      placeholder = "Buscar publicaciones, personas...";
     }
 
     return (
@@ -220,7 +221,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                 <DropdownMenuContent align="end" className="w-80">
                     <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {notifications.map((notification, index) => (
+                    {notifications.length > 0 ? notifications.map((notification, index) => (
                          <DropdownMenuItem key={index} className="flex items-start gap-3 p-3">
                             <Avatar className="h-8 w-8">
                                 <AvatarImage src={getImageUrl(notification.avatarId)} />
@@ -231,7 +232,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                                 <p className="text-xs text-muted-foreground">{notification.time}</p>
                             </div>
                         </DropdownMenuItem>
-                    ))}
+                    )) : (
+                       <p className="p-4 text-sm text-center text-muted-foreground">No tienes notificaciones nuevas.</p>
+                    )}
                     <DropdownMenuSeparator />
                      <DropdownMenuItem className="justify-center text-sm text-primary hover:!bg-accent">
                         Ver todas las notificaciones

@@ -16,9 +16,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useFirestore, useFirebase } from "@/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
+import { getImageUrl } from "@/lib/placeholder-images";
 
 const profileSchema = z.object({
     firstName: z.string().min(1, "El nombre es requerido."),
@@ -30,9 +31,13 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function SettingsPage() {
-    const { avatar, setAvatar, coverImage, setCoverImage, userProfile } = useUser();
+    const { userProfile, refetchUserProfile } = useUser();
     const firestore = useFirestore();
     const { user } = useFirebase();
+
+    const [avatar, setAvatar] = useState(userProfile?.profilePicture || getImageUrl('default-user-avatar'));
+    const [coverImage, setCoverImage] = useState(userProfile?.coverImage || getImageUrl('cover-default'));
+
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
@@ -52,6 +57,8 @@ export default function SettingsPage() {
                 description: userProfile.description || "",
                 website: userProfile.website || "",
             });
+            setAvatar(userProfile.profilePicture || getImageUrl('default-user-avatar'));
+            setCoverImage(userProfile.coverImage || getImageUrl('cover-default'));
         }
     }, [userProfile, form]);
 
@@ -63,17 +70,15 @@ export default function SettingsPage() {
 
         const userDocRef = doc(firestore, "userProfiles", user.uid);
         const updatedData = {
-            firstName: data.firstName,
-            lastName: data.lastName,
-            description: data.description,
-            website: data.website,
-            profilePicture: avatar, 
-            // coverImage: coverImage // Add this if you have a coverImage field in firestore
+            ...data,
+            profilePicture: avatar,
+            coverImage: coverImage,
         };
 
         updateDoc(userDocRef, updatedData)
             .then(() => {
                 toast({ title: "Perfil actualizado", description: "Tu información ha sido guardada." });
+                if(refetchUserProfile) refetchUserProfile();
             })
             .catch(serverError => {
                  const permissionError = new FirestorePermissionError({

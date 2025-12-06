@@ -12,30 +12,25 @@ import Link from 'next/link';
 import { useUser } from '@/context/user-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useMemoFirebase, useFirestore, useFirebase } from '@/firebase';
-import { collection, query, orderBy, DocumentData } from 'firebase/firestore';
+import { collection, query, where, orderBy, DocumentData } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import React, { useMemo } from 'react';
+import { getImageUrl } from '@/lib/placeholder-images';
+
 
 export default function ProfilePage() {
-    const { avatar, coverImage, userProfile, isUserLoading } = useUser();
+    const { userProfile, isUserLoading } = useUser();
     const firestore = useFirestore();
     const { user } = useFirebase();
 
-    // Query for all posts, ordered by creation date.
-    const allPostsQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return query(collection(firestore, 'posts'), orderBy('createdAt', 'desc'));
-    }, [firestore]);
+    // Memoize the query to prevent re-creation on every render
+    const userPostsQuery = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return query(collection(firestore, 'posts'), where('authorId', '==', user.uid), orderBy('createdAt', 'desc'));
+    }, [firestore, user]);
 
-    const { data: allPosts, isLoading: arePostsLoading } = useCollection<DocumentData>(allPostsQuery);
-
-    // Filter posts on the client-side
-    const userPosts = useMemo(() => {
-        if (!allPosts || !user) return [];
-        return allPosts.filter(post => post.authorId === user.uid);
-    }, [allPosts, user]);
-
+    const { data: userPosts, isLoading: arePostsLoading } = useCollection<DocumentData>(userPostsQuery);
 
      const formatPostTime = (timestamp: any) => {
         if (!timestamp) return 'hace un momento';
@@ -52,6 +47,9 @@ export default function ProfilePage() {
     
     const followersCount = userProfile?.followers?.length || 0;
     const followingCount = userProfile?.following?.length || 0;
+    
+    const avatar = userProfile?.profilePicture || getImageUrl('default-user-avatar');
+    const coverImage = userProfile?.coverImage || getImageUrl('cover-default');
 
     if (isUserLoading) {
         return (
@@ -147,11 +145,10 @@ export default function ProfilePage() {
                                     authorId: post.authorId,
                                     time: formatPostTime(post.createdAt),
                                     content: post.content,
-                                    stats: {
-                                        likes: post.likeIds?.length || 0,
-                                        comments: post.commentIds?.length || 0,
-                                        reposts: 0,
-                                    }
+                                    likedBy: post.likedBy || [],
+                                    repostedBy: post.repostedBy || [],
+                                    originalPostId: post.originalPostId,
+                                    originalAuthorId: post.originalAuthorId,
                                 };
                                 return <PostCard key={post.id} {...postProps} />;
                             })
@@ -177,5 +174,3 @@ export default function ProfilePage() {
         </div>
     )
 }
-
-    

@@ -7,6 +7,12 @@
       "imageHint": "avatar placeholder"
     },
     {
+      "id": "cover-default",
+      "description": "Default blank cover image",
+      "imageUrl": "https://storage.googleapis.com/studioprototyper/users/unsch-connect/assets/cover_default.png",
+      "imageHint": "blank banner"
+    },
+    {
       "id": "user-avatar-main",
       "description": "Main user avatar",
       "imageUrl": "https://images.unsplash.com/photo-1590086782792-42dd2350140d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM0NzE1OTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
