@@ -16,6 +16,7 @@ import { useFirestore, useMemoFirebase, useFirebase } from '@/firebase';
 import { toast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Skeleton } from './ui/skeleton';
 
 export type PostProps = {
   id: string; // ID is now mandatory for deletion
@@ -54,10 +55,17 @@ export function PostCard({ id, authorId, time, content, imageId, imageAlt, stats
 
   const postImageUrl = imageId ? getImageUrl(imageId) : null;
   
-  const authorName = authorProfile ? `${authorProfile.firstName} ${authorProfile.lastName}`.trim() : 'Usuario';
+  const authorName = authorProfile ? `${authorProfile.firstName} ${authorProfile.lastName}`.trim() || authorProfile.email?.split('@')[0] : 'Usuario';
   const authorUsername = authorProfile ? authorProfile.email?.split('@')[0] : '...';
   const authorAvatarUrl = authorProfile?.profilePicture || getImageUrl('default-user-avatar');
   const authorSchool = authorProfile?.school;
+
+  const handleCommentClick = () => {
+    toast({
+      title: "En desarrollo",
+      description: "La funcionalidad de comentarios se añadirá pronto.",
+    });
+  };
 
   const handleDelete = async () => {
     if (!firestore || !id) return;
@@ -88,12 +96,15 @@ export function PostCard({ id, authorId, time, content, imageId, imageAlt, stats
 
   if (isLoading) {
     return (
-        <Card className="p-4">
+        <Card className="p-4 shadow-sm">
             <div className="flex gap-4">
-                <div className="h-11 w-11 rounded-full bg-muted animate-pulse"></div>
+                <Skeleton className="h-11 w-11 rounded-full" />
                 <div className="flex-1 space-y-3">
-                    <div className="h-4 w-1/2 bg-muted animate-pulse rounded-md"></div>
-                    <div className="h-10 w-full bg-muted animate-pulse rounded-md"></div>
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-4 w-1/3" />
+                      <Skeleton className="h-3 w-1/4" />
+                    </div>
+                    <Skeleton className="h-12 w-full" />
                 </div>
             </div>
         </Card>
@@ -105,7 +116,7 @@ export function PostCard({ id, authorId, time, content, imageId, imageAlt, stats
        <div className="p-4 flex gap-4">
         <Avatar className="h-11 w-11">
           <AvatarImage src={authorAvatarUrl} alt={authorName} />
-          <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
+          <AvatarFallback>{authorName?.charAt(0) || 'U'}</AvatarFallback>
         </Avatar>
         <div className="flex-1 space-y-2">
             <div className='flex justify-between items-start'>
@@ -170,7 +181,7 @@ export function PostCard({ id, authorId, time, content, imageId, imageAlt, stats
             </div>
             )}
             <div className="flex justify-between items-center pt-2 -ml-2">
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" aria-label={`${stats.comments} comentarios`}>
+                <Button variant="ghost" onClick={handleCommentClick} className="flex items-center gap-2 text-muted-foreground hover:text-primary" aria-label={`${stats.comments} comentarios`}>
                     <MessageCircle className="h-5 w-5" />
                     <span className="text-sm">{stats.comments}</span>
                 </Button>
@@ -191,3 +202,5 @@ export function PostCard({ id, authorId, time, content, imageId, imageAlt, stats
     </Card>
   );
 }
+
+    

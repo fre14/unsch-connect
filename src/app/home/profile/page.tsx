@@ -7,12 +7,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Mail, Link as LinkIcon, CalendarDays, XCircle } from "lucide-react";
+import { Edit, Mail, Link as LinkIcon, CalendarDays, XCircle, LoaderCircle } from "lucide-react";
 import Link from 'next/link';
 import { useUser } from '@/context/user-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useMemoFirebase, useFirestore, useFirebase } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import React, { useMemo } from 'react';
@@ -22,13 +22,20 @@ export default function ProfilePage() {
     const firestore = useFirestore();
     const { user } = useFirebase();
 
-    // The query now specifically filters posts by the current user's ID on the server.
-    const userPostsQuery = useMemoFirebase(() => {
-        if (!firestore || !user) return null;
-        return query(collection(firestore, 'posts'), where('authorId', '==', user.uid), orderBy('createdAt', 'desc'));
-    }, [firestore, user]);
+    // Query for all posts, ordered by creation date.
+    const allPostsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'posts'), orderBy('createdAt', 'desc'));
+    }, [firestore]);
 
-    const { data: userPosts, isLoading: arePostsLoading } = useCollection(userPostsQuery);
+    const { data: allPosts, isLoading: arePostsLoading } = useCollection(allPostsQuery);
+
+    // Filter posts on the client-side
+    const userPosts = useMemo(() => {
+        if (!allPosts || !user) return [];
+        return allPosts.filter(post => post.authorId === user.uid);
+    }, [allPosts, user]);
+
 
      const formatPostTime = (timestamp: any) => {
         if (!timestamp) return 'hace un momento';
@@ -129,9 +136,9 @@ export default function ProfilePage() {
                 <TabsContent value="posts">
                     <div className="space-y-6 mt-6">
                         {arePostsLoading ? (
-                            <div className="space-y-4">
-                                <Skeleton className="h-32 w-full" />
-                                <Skeleton className="h-32 w-full" />
+                           <div className="flex flex-col items-center justify-center pt-20">
+                                <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+                                <p className="mt-4 text-muted-foreground">Cargando tus publicaciones...</p>
                             </div>
                         ) : userPosts && userPosts.length > 0 ? (
                            userPosts.map((post) => {
@@ -170,3 +177,5 @@ export default function ProfilePage() {
         </div>
     )
 }
+
+    
