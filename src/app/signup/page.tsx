@@ -16,6 +16,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { getImageUrl } from '@/lib/placeholder-images';
 
 const careers = [
     "Administración de Empresas",
@@ -112,7 +113,7 @@ export default function SignUpPage() {
             firstName: '', // Will be set up in profile settings
             lastName: '', // Will be set up in profile settings
             cycle: 'I', // Default cycle
-            profilePicture: '', // Default or placeholder
+            profilePicture: getImageUrl('default-user-avatar'),
             description: ''
         };
 

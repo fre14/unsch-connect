@@ -33,6 +33,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: ReactNode }) {
   const { user, isUserLoading: isAuthLoading } = useFirebaseUser();
   const firestore = useFirestore();
+  const defaultAvatar = getImageUrl('default-user-avatar');
 
   const userDocRef = useMemoFirebase(() => {
     if (firestore && user) {
@@ -56,14 +57,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return null;
   }, [user, userProfileData]);
 
-  const [avatar, setAvatar] = useState<string>(getImageUrl('user-avatar-main'));
+  const [avatar, setAvatar] = useState<string>(defaultAvatar);
   const [coverImage, setCoverImage] = useState<string>(getImageUrl('aniversary-banner'));
   
   useEffect(() => {
-    if (userProfile?.profilePicture) {
-      setAvatar(userProfile.profilePicture);
-    }
-  }, [userProfile]);
+    // Set avatar from profile, or fall back to default if it's missing or an empty string.
+    setAvatar(userProfile?.profilePicture || defaultAvatar);
+  }, [userProfile, defaultAvatar]);
 
 
   return (
