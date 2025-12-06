@@ -27,17 +27,18 @@ export default function ProfilePage() {
     const allPostsQuery = useMemoFirebase(() => {
         if (!firestore || !user) return null;
         // Query for posts created by the user OR reposted by the user
-        return query(collection(firestore, 'posts'), orderBy('createdAt', 'desc'));
+        return query(collection(firestore, 'posts'), where('authorId', '==', user.uid), orderBy('createdAt', 'desc'));
     }, [firestore, user]);
 
-    const { data: allPosts, isLoading: arePostsLoading } = useCollection<DocumentData>(allPostsQuery);
+    const { data: userCreatedPosts, isLoading: arePostsLoading } = useCollection<DocumentData>(allPostsQuery);
 
     const { userPosts, userReposts } = useMemo(() => {
-        if (!allPosts || !user) return { userPosts: [], userReposts: [] };
-        const posts = allPosts.filter(post => post.authorId === user.uid && !post.originalPostId);
-        const reposts = allPosts.filter(post => post.authorId === user.uid && post.originalPostId);
+        if (!userCreatedPosts) return { userPosts: [], userReposts: [] };
+        // post.originalPostId exists on reposts
+        const posts = userCreatedPosts.filter(post => !post.originalPostId);
+        const reposts = userCreatedPosts.filter(post => !!post.originalPostId);
         return { userPosts: posts, userReposts: reposts };
-    }, [allPosts, user]);
+    }, [userCreatedPosts]);
 
      const formatPostTime = (timestamp: any) => {
         if (!timestamp) return 'hace un momento';
@@ -154,8 +155,6 @@ export default function ProfilePage() {
                                     content: post.content,
                                     likedBy: post.likedBy || [],
                                     repostedBy: post.repostedBy || [],
-                                    originalPostId: post.originalPostId,
-                                    originalAuthorId: post.originalAuthorId,
                                 };
                                 return <PostCard key={post.id} {...postProps} />;
                             })

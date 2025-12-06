@@ -183,7 +183,7 @@ export function PostCard(props: PostProps) {
         return doc(firestore, 'posts', originalPostId);
     }, [firestore, originalPostId]);
 
-    const { data: originalPost, isLoading: isOriginalPostLoading } = useDoc<DocumentData>(originalPostQuery);
+    const { data: originalPostData, isLoading: isOriginalPostLoading } = useDoc<DocumentData>(originalPostQuery);
     
     const postImageUrl = imageId ? getImageUrl(imageId) : null;
   
@@ -325,13 +325,25 @@ export function PostCard(props: PostProps) {
                 <p className="whitespace-pre-wrap text-base">{content}</p>
 
                 {/* Render original post content if this is a repost */}
-                {originalPostId && originalPost && (
+                {originalPostId && (
                     <div className="border rounded-lg p-3 mt-2">
-                        <PostCard 
-                            {...originalPost as any}
-                            id={originalPost.id}
-                            time={formatPostTime(originalPost.createdAt)}
-                         />
+                        {isOriginalPostLoading ? (
+                             <div className="flex gap-4">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <div className="flex-1 space-y-2">
+                                    <Skeleton className="h-4 w-2/3" />
+                                    <Skeleton className="h-8 w-full" />
+                                </div>
+                            </div>
+                        ): originalPostData ? (
+                            <PostCard 
+                                {...originalPostData as any}
+                                id={originalPostData.id}
+                                time={formatPostTime(originalPostData.createdAt)}
+                            />
+                        ) : (
+                            <p className='text-sm text-muted-foreground'>Esta publicación ya no está disponible.</p>
+                        )}
                     </div>
                 )}
 
@@ -361,7 +373,3 @@ export function PostCard(props: PostProps) {
         </Card>
     );
 }
-
-    
-
-    
