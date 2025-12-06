@@ -114,7 +114,8 @@ export default function SignUpPage() {
             lastName: '', // Will be set up in profile settings
             cycle: 'I', // Default cycle
             profilePicture: getImageUrl('default-user-avatar'),
-            description: ''
+            description: '',
+            role: 'student_teacher' // Default role for new users
         };
 
         const userDocRef = doc(firestore, "userProfiles", user.uid);

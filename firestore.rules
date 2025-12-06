@@ -1,41 +1,53 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Secure user profile data. Allows anyone to create their own profile, but only the owner can read/write afterward.
-     * @path /userProfiles/{userProfileId}
-     */
-    match /userProfiles/{userProfileId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-      
-      allow get: if isOwner(userProfileId);
-      allow list: if false; // User listing is disabled for privacy.
-      allow create: if isOwner(userProfileId);
-      allow update, delete: if isOwner(userProfileId);
+    // Helper functions
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/userProfiles/$(userId)).data.role;
+    }
+
+    function isAdmin() {
+      return request.auth != null && getUserRole(request.auth.uid) == 'admin';
+    }
+
+    function isOfficial() {
+      return request.auth != null && (getUserRole(request.auth.uid) == 'official' || isAdmin());
+    }
+
+    // Admins have universal access
+    match /{document=**} {
+      allow read, write: if isAdmin();
     }
 
     /**
-     * @description Allow public read access to posts, but restrict creation, updates, and deletion to the post author.
-     * @path /posts/{postId}
+     * @description Secure user profile data.
+     * Users can create their own profile.
+     * Only owners can read or update their own profile, with an exception for the 'role' field.
+     * The 'role' field can only be changed by an admin.
+     */
+    match /userProfiles/{userProfileId} {
+      allow get: if isOwner(userProfileId);
+      allow list: if false; // User listing is disabled for privacy.
+      allow create: if isOwner(userProfileId) && request.resource.data.role == 'student_teacher';
+      allow update: if isOwner(userProfileId) && request.resource.data.keys().diff(resource.data.keys()).hasOnly(['role']) == false;
+    }
+
+    /**
+     * @description Allow public read access to posts, but restrict writes to the author.
      */
     match /posts/{postId} {
-      // Rule #1: Public read access for any document and the collection.
       allow read: if true;
-
-      // Rule #2: Post creation is only for authenticated users.
       allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
-      
-      // Rule #3: Updating and deleting is only for the post's author.
       allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
     }
 
      /**
-      * @description Secure comments, allowing anyone to read, but only the author to create, update or delete.
-      * @path /posts/{postId}/comments/{commentId}
+      * @description Secure comments, allowing anyone to read, but only the author to write.
       */
     match /posts/{postId}/comments/{commentId} {
       allow read: if true;
@@ -44,35 +56,30 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows public read access to university announcements.
-     * @path /announcements/{announcementId}
+     * @description Allows public read access to announcements, but creation is restricted.
+     * Only 'official' or 'admin' users can create announcements.
+     * Updates and deletes are disallowed for data integrity.
      */
     match /announcements/{announcementId} {
       allow read: if true;
-      allow write: if false;
+      allow create: if isOfficial();
+      allow update, delete: if false; // Announcements are immutable by default
     }
 
     /**
      * @description Secure academic schedule data, allowing only the owner to read and write.
-     * @path /userProfiles/{userProfileId}/academicSchedules/{academicScheduleId}
      */
     match /userProfiles/{userProfileId}/academicSchedules/{academicScheduleId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
       allow read, write: if isOwner(userProfileId);
     }
 
     /**
-     * @description Secure password reset tokens, allowing create, read and delete but imposing time and usage limits.
-     * @path /passwordResetTokens/{tokenId}
+     * @description Secure password reset tokens.
      */
     match /passwordResetTokens/{tokenId} {
         allow read, create: if request.auth != null;
-        allow delete: if false;
+        allow update, delete: if false;
         allow list: if false;
-        allow update: if false;
     }
   }
 }
