@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PostCard, PostProps } from '@/components/post-card';
+import { PostCard } from '@/components/post-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -15,10 +15,11 @@ import { XCircle, LoaderCircle, PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useCollection, useMemoFirebase, useFirestore, useFirebase } from '@/firebase';
 import { useUser } from '@/context/user-context';
-import { collection, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, addDoc, serverTimestamp, DocumentData } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { formatPostTime } from '@/lib/utils';
 
 const announcementSchema = z.object({
   title: z.string().min(1, 'El título es requerido.'),
@@ -151,42 +152,21 @@ export default function AnnouncementsPage({ searchTerm: layoutSearchTerm }: { se
         return query(collection(firestore, 'announcements'), orderBy('createdAt', 'desc'));
     }, [firestore]);
 
-    const { data: rawAnnouncements, isLoading } = useCollection(announcementsQuery);
+    const { data: rawAnnouncements, isLoading } = useCollection<DocumentData>(announcementsQuery);
 
     const filteredAnnouncements = useMemo(() => {
         if (!rawAnnouncements) return [];
         
-        let announcements = rawAnnouncements;
-
-        // Filter by category
-        if (category !== 'all') {
-            announcements = announcements.filter(post => post.category === category);
-        }
-
-        // Filter by search term
         const lowercasedTerm = searchTerm.toLowerCase();
-        if (lowercasedTerm) {
-            announcements = announcements.filter(post =>
-                post.content?.toLowerCase().includes(lowercasedTerm) ||
-                post.title?.toLowerCase().includes(lowercasedTerm)
-            );
-        }
-        
-        return announcements;
-    }, [rawAnnouncements, searchTerm, category]);
 
-    const formatPostTime = (timestamp: any) => {
-        if (!timestamp) return 'hace un momento';
-        const date = timestamp.toDate();
-        const now = new Date();
-        const diff = Math.abs(now.getTime() - date.getTime());
-        const diffMinutes = Math.ceil(diff / (1000 * 60));
-        const diffHours = Math.ceil(diff / (1000 * 60 * 60));
-        
-        if (diffMinutes < 60) return `hace ${diffMinutes} min`;
-        if (diffHours < 24) return `hace ${diffHours} h`;
-        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
-    };
+        return rawAnnouncements.filter(post => {
+            const categoryMatch = category === 'all' || post.category === category;
+            const searchMatch = !lowercasedTerm || 
+                post.content?.toLowerCase().includes(lowercasedTerm) ||
+                post.title?.toLowerCase().includes(lowercasedTerm);
+            return categoryMatch && searchMatch;
+        });
+    }, [rawAnnouncements, searchTerm, category]);
 
     return (
         <div className="max-w-2xl mx-auto">
@@ -229,17 +209,17 @@ export default function AnnouncementsPage({ searchTerm: layoutSearchTerm }: { se
                         <p className="mt-4 text-muted-foreground">Cargando anuncios...</p>
                     </div>
                 ) : filteredAnnouncements.length > 0 ? (
-                    filteredAnnouncements.map((post) => {
-                        const postProps: PostProps = {
-                            id: post.id,
-                            authorId: post.publisherId,
-                            time: formatPostTime(post.createdAt),
-                            content: `${post.title ? `**${post.title}**\n\n` : ''}${post.content}`,
-                            stats: { likes: 0, comments: 0, reposts: 0 },
-                            isOfficial: true,
-                        };
-                        return <PostCard key={post.id} {...postProps} />;
-                    })
+                    filteredAnnouncements.map((post) => (
+                        <PostCard 
+                            key={post.id} 
+                            id={post.id}
+                            authorId={post.publisherId}
+                            authorOverride={{ name: "Comunicado Oficial" }}
+                            time={formatPostTime(post.createdAt)}
+                            content={`${post.title ? `**${post.title}**\n\n` : ''}${post.content}`}
+                            isOfficial={true}
+                        />
+                    ))
                 ) : (
                     <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card">
                         <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
@@ -251,4 +231,5 @@ export default function AnnouncementsPage({ searchTerm: layoutSearchTerm }: { se
         </div>
     );
 }
+    
     
