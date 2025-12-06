@@ -17,6 +17,7 @@ interface UserProfile {
   cycle: string;
   profilePicture: string;
   description: string;
+  role: 'student_teacher' | 'official' | 'admin';
 }
 
 interface UserContextType {

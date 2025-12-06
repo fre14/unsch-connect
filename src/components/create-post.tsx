@@ -14,20 +14,24 @@ import { FirestorePermissionError } from "@/firebase/errors";
 import { errorEmitter } from "@/firebase/error-emitter";
 
 export function CreatePost() {
-  const { avatar, userProfile } = useUser();
+  const { avatar, userProfile, isUserLoading } = useUser();
   const { user } = useFirebase();
   const firestore = useFirestore();
   const [content, setContent] = React.useState("");
   const [isPublishing, setIsPublishing] = React.useState(false);
 
   const handlePublish = async () => {
-    if (!content.trim() || !user || !firestore || !userProfile) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No se puede publicar. Asegúrate de haber iniciado sesión y completado tu perfil.",
-      });
+    if (!content.trim() || !user || !firestore) {
       return;
+    }
+    
+    if (isUserLoading || !userProfile) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Tu perfil aún se está cargando. Inténtalo de nuevo en un momento.",
+        });
+        return;
     }
 
     setIsPublishing(true);
@@ -46,25 +50,26 @@ export function CreatePost() {
       commentIds: [],
     };
 
-    try {
-      const postsCollectionRef = collection(firestore, "posts");
-      await addDoc(postsCollectionRef, newPost);
-      setContent("");
-      toast({
-        title: "¡Publicado!",
-        description: "Tu publicación ha sido compartida con la comunidad.",
-      });
-    } catch (error: any) {
-      const permissionError = new FirestorePermissionError({
-        path: collection(firestore, 'posts').path,
-        operation: 'create',
-        requestResourceData: newPost,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-      
-    } finally {
-      setIsPublishing(false);
-    }
+    const postsCollectionRef = collection(firestore, "posts");
+    addDoc(postsCollectionRef, newPost)
+        .then(() => {
+            setContent("");
+            toast({
+                title: "¡Publicado!",
+                description: "Tu publicación ha sido compartida con la comunidad.",
+            });
+        })
+        .catch((error: any) => {
+            const permissionError = new FirestorePermissionError({
+                path: postsCollectionRef.path,
+                operation: 'create',
+                requestResourceData: newPost,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        })
+        .finally(() => {
+            setIsPublishing(false);
+        });
   };
 
   return (

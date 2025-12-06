@@ -33,11 +33,12 @@ export default function AnnouncementsPage() {
 
     const filteredAnnouncements = useMemo(() => {
         if (!rawAnnouncements) return [];
-        if (!searchTerm) return rawAnnouncements;
+        const lowercasedTerm = searchTerm.toLowerCase();
+        if (!lowercasedTerm) return rawAnnouncements;
 
         return rawAnnouncements.filter(post =>
-            post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (post.authorName && post.authorName.toLowerCase().includes(searchTerm.toLowerCase()))
+            post.content?.toLowerCase().includes(lowercasedTerm) ||
+            post.title?.toLowerCase().includes(lowercasedTerm)
         );
     }, [rawAnnouncements, searchTerm]);
 
@@ -83,12 +84,12 @@ export default function AnnouncementsPage() {
                         const postProps: PostProps = {
                             id: post.id,
                             author: {
-                                name: post.authorName,
-                                username: post.authorUsername,
-                                avatarId: post.authorAvatarId,
+                                name: post.authorName || "Comunicado Oficial",
+                                username: post.authorUsername || "unsch",
+                                avatarId: post.authorAvatarId || 'rector-avatar',
                             },
                             time: formatPostTime(post.createdAt),
-                            content: post.content,
+                            content: `${post.title ? `**${post.title}**\n\n` : ''}${post.content}`,
                             stats: { likes: 0, comments: 0, reposts: 0 },
                             isOfficial: true,
                         };
