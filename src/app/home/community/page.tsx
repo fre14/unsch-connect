@@ -50,7 +50,8 @@ export default function CommunityPage() {
             <Skeleton className="h-[150px] w-full" />
           </div>
         )}
-        {!isLoading && posts && posts.length > 0 ? (
+
+        {!isLoading && posts && posts.length > 0 && (
           posts.map((post) => {
             const postProps: PostProps = {
               id: post.id,
@@ -69,7 +70,9 @@ export default function CommunityPage() {
             };
             return <PostCard key={post.id} {...postProps} />;
           })
-        ) : !isLoading && (
+        )}
+
+        {!isLoading && (!posts || posts.length === 0) && (
           <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card mt-6">
                 <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
                 <h3 className="mt-4 text-xl font-semibold text-foreground">Aún no hay nada por aquí</h3>

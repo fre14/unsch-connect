@@ -36,7 +36,7 @@ export function CreatePost() {
       authorId: user.uid,
       authorName: `${userProfile.firstName} ${userProfile.lastName}`.trim() || userProfile.email,
       authorUsername: userProfile.email?.split('@')[0] || 'unknown_user',
-      authorAvatarId: 'user-avatar-main', // This should eventually come from userProfile.profilePicture
+      authorAvatarId: 'user-avatar-main',
       content: content,
       postType: 'text',
       createdAt: serverTimestamp(),
@@ -48,38 +48,32 @@ export function CreatePost() {
     try {
       const postsCollectionRef = collection(firestore, "posts");
       
-      addDoc(postsCollectionRef, newPost)
-        .then(() => {
-          setContent("");
-          toast({
-            title: "¡Publicado!",
-            description: "Tu publicación ha sido compartida con la comunidad.",
-          });
-        })
-        .catch(serverError => {
-            const permissionError = new FirestorePermissionError({
-                path: postsCollectionRef.path,
-                operation: 'create',
-                requestResourceData: newPost,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            toast({
-              variant: "destructive",
-              title: "Error de publicación",
-              description: "No tienes permiso para crear publicaciones.",
-            });
-        })
-        .finally(() => {
-          setIsPublishing(false);
-        });
+      await addDoc(postsCollectionRef, newPost);
 
-    } catch (error) {
-      console.error("Unexpected error publishing post:", error);
+      setContent("");
+      toast({
+        title: "¡Publicado!",
+        description: "Tu publicación ha sido compartida con la comunidad.",
+      });
+
+    } catch (error: any) {
+      // Create a specific permission error to be caught globally
+      const permissionError = new FirestorePermissionError({
+        path: collection(firestore, 'posts').path,
+        operation: 'create',
+        requestResourceData: newPost,
+      });
+      // Emit the error for the global handler to catch
+      errorEmitter.emit('permission-error', permissionError);
+      
+      // Also show a local toast for immediate user feedback
       toast({
         variant: "destructive",
-        title: "Error inesperado",
-        description: "No se pudo publicar tu post. Inténtalo más tarde.",
+        title: "Error de publicación",
+        description: "No tienes permiso para crear publicaciones.",
       });
+      console.error("Error creating post:", error);
+    } finally {
       setIsPublishing(false);
     }
   };
