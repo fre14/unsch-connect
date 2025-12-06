@@ -42,7 +42,6 @@ export default function CommunityPage() {
     const diff = Math.abs(now.getTime() - date.getTime());
     const diffMinutes = Math.ceil(diff / (1000 * 60));
     const diffHours = Math.ceil(diff / (1000 * 60 * 60));
-    const diffDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
 
     if (diffMinutes < 60) return `hace ${diffMinutes} min`;
     if (diffHours < 24) return `hace ${diffHours} h`;
@@ -69,15 +68,13 @@ export default function CommunityPage() {
           />
         </div>
         
-        {isLoading && (
+        {isLoading ? (
           <div className="space-y-4">
             <Skeleton className="h-[150px] w-full" />
             <Skeleton className="h-[150px] w-full" />
             <Skeleton className="h-[150px] w-full" />
           </div>
-        )}
-
-        {!isLoading && filteredPosts && filteredPosts.length > 0 && (
+        ) : filteredPosts.length > 0 ? (
           filteredPosts.map((post) => {
             const postProps: PostProps = {
               id: post.id,
@@ -97,16 +94,14 @@ export default function CommunityPage() {
             };
             return <PostCard key={post.id} {...postProps} />;
           })
-        )}
-
-        {!isLoading && (!filteredPosts || filteredPosts.length === 0) && (
+        ) : (
           <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card mt-6">
                 <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
                 <h3 className="mt-4 text-xl font-semibold text-foreground">
                   {searchTerm ? 'No se encontraron resultados' : 'Aún no hay nada por aquí'}
                 </h3>
                 <p className="mt-2">
-                  {searchTerm ? 'Intenta con otra búsqueda o sé el primero en publicar algo.' : '¡Sé el primero en compartir algo con la comunidad!'}
+                  {searchTerm ? 'Intenta con otra búsqueda.' : '¡Sé el primero en compartir algo con la comunidad!'}
                 </p>
             </Card>
         )}
