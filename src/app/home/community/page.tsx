@@ -32,45 +32,28 @@ function CommunityPageContent() {
       });
   }, [rawPosts]);
 
-  const authorsQuery = useMemoFirebase(() => {
-      if (!firestore || !posts || posts.length === 0) return null;
-      // Get unique author IDs to fetch
-      const authorIds = [...new Set(posts.map(p => p.authorId).filter(Boolean))];
-      if (authorIds.length === 0) return null;
-      // This is not a direct query, but we use this to fetch multiple docs.
-      // In a real app with many posts, you would denormalize author data onto posts
-      // or implement a more complex state management/caching layer.
-      return collection(firestore, 'userProfiles');
-  }, [firestore, posts]);
+  // The logic to get author profiles has been removed from here
+  // and is now handled individually within each PostCard component.
+  // This is more efficient and respects the security rules.
   
-  // This is a simplification. In a real large-scale app, you would not fetch all users.
-  const { data: authors, isLoading: isLoadingAuthors } = useCollection<DocumentData>(authorsQuery);
-
-  const authorsMap = useMemo(() => {
-    if (!authors) return new Map();
-    return new Map(authors.map(author => [author.id, author]));
-  }, [authors]);
-
-
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
     if (!searchTerm) return posts;
     
     const lowercasedTerm = searchTerm.toLowerCase();
     
+    // Note: Author filtering would require author data to be available here.
+    // Since we're fetching it inside PostCard for security/efficiency,
+    // this search will only apply to post content.
+    // A more advanced search would require denormalizing author names onto posts
+    // or using a search service like Algolia.
     return posts.filter(post => {
-      const author = authorsMap.get(post.authorId);
-      const authorName = author ? `${author.firstName} ${author.lastName}`.toLowerCase() : '';
-      const authorEmail = author ? author.email.toLowerCase() : '';
       const content = post.content?.toLowerCase() || '';
-
-      return content.includes(lowercasedTerm) || 
-             authorName.includes(lowercasedTerm) || 
-             authorEmail.includes(lowercasedTerm);
+      return content.includes(lowercasedTerm);
     });
-  }, [posts, searchTerm, authorsMap]);
+  }, [posts, searchTerm]);
 
-  const isLoading = isLoadingPosts || (posts && posts.length > 0 && isLoadingAuthors);
+  const isLoading = isLoadingPosts;
 
   return (
     <div className="max-w-2xl mx-auto relative">
