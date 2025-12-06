@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Mail, Link as LinkIcon, CalendarDays, XCircle, LoaderCircle } from "lucide-react";
+import { Edit, Mail, Link as LinkIcon, CalendarDays, XCircle } from "lucide-react";
 import Link from 'next/link';
 import { useUser } from '@/context/user-context';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -48,6 +48,9 @@ export default function ProfilePage() {
         if (diffHours < 24) return `hace ${diffHours} h`;
         return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
     };
+    
+    const followersCount = userProfile?.followers?.length || 0;
+    const followingCount = userProfile?.following?.length || 0;
 
     if (isUserLoading) {
         return (
@@ -105,8 +108,8 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/><span>Se unió en {user?.metadata.creationTime ? format(new Date(user.metadata.creationTime), "MMMM 'de' yyyy", { locale: es }) : '2024'}</span></div>
                         </div>
                         <div className="mt-4 flex gap-6 text-sm">
-                            <Link href="#" className="hover:underline"><span className="font-bold text-foreground">120</span> <span className="text-muted-foreground">Seguidores</span></Link>
-                            <Link href="#" className="hover:underline"><span className="font-bold text-foreground">85</span> <span className="text-muted-foreground">Siguiendo</span></Link>
+                            <Link href="#" className="hover:underline"><span className="font-bold text-foreground">{followersCount}</span> <span className="text-muted-foreground">Seguidores</span></Link>
+                            <Link href="#" className="hover:underline"><span className="font-bold text-foreground">{followingCount}</span> <span className="text-muted-foreground">Siguiendo</span></Link>
                         </div>
                     </div>
                 </CardContent>
@@ -166,3 +169,5 @@ export default function ProfilePage() {
         </div>
     )
 }
+
+    
