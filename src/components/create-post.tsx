@@ -103,8 +103,8 @@ export function CreatePost() {
             />
             <div className="flex justify-between items-center pt-2">
                 <div className="flex gap-1 text-primary">
-                    <Button variant="ghost" size="icon" disabled={isPublishing}><ImageIcon className="h-5 w-5" /></Button>
-                    <Button variant="ghost" size="icon" disabled={isPublishing}><Globe className="h-5 w-5" /></Button>
+                    <Button variant="ghost" size="icon" disabled={isPublishing} aria-label="Añadir imagen"><ImageIcon className="h-5 w-5" /></Button>
+                    <Button variant="ghost" size="icon" disabled={isPublishing} aria-label="Cambiar visibilidad"><Globe className="h-5 w-5" /></Button>
                 </div>
               <Button className="rounded-full" onClick={handlePublish} disabled={!content.trim() || isPublishing}>
                 {isPublishing ? "Publicando..." : "Publicar"}

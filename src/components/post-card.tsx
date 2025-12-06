@@ -49,8 +49,8 @@ export function PostCard({ id, author, time, content, imageId, imageAlt, stats, 
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                        <MoreHorizontal className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Más opciones">
+                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -66,19 +66,19 @@ export function PostCard({ id, author, time, content, imageId, imageAlt, stats, 
             </div>
             )}
             <div className="flex justify-between items-center pt-2 -ml-2">
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" aria-label={`${stats.comments} comentarios`}>
                     <MessageCircle className="h-5 w-5" />
                     <span className="text-sm">{stats.comments}</span>
                 </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500">
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-green-500" aria-label={`${stats.reposts} reposts`}>
                     <Repeat className="h-5 w-5" />
                     <span className="text-sm">{stats.reposts}</span>
                 </Button>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-red-500">
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-red-500" aria-label={`${stats.likes} me gusta`}>
                     <Heart className="h-5 w-5" />
                     <span className="text-sm">{stats.likes}</span>
                 </Button>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" aria-label="Guardar publicación">
                     <Bookmark className="h-5 w-5" />
                 </Button>
             </div>

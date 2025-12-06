@@ -62,7 +62,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const MobileCreatePostDialog = () => (
     <Dialog>
         <DialogTrigger asChild>
-          <Button className="fixed bottom-20 right-6 sm:hidden rounded-full w-14 h-14 shadow-lg z-40 bg-accent hover:bg-accent/90">
+          <Button aria-label="Crear nueva publicación" className="fixed bottom-20 right-6 sm:hidden rounded-full w-14 h-14 shadow-lg z-40 bg-accent hover:bg-accent/90">
             <Plus className="h-6 w-6" />
           </Button>
         </DialogTrigger>
@@ -182,7 +182,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                 <DropdownMenuTrigger asChild>
                    <Tooltip>
                         <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="rounded-full relative">
+                        <Button variant="ghost" size="icon" className="rounded-full relative" aria-label="Notificaciones">
                             <Bell className="h-5 w-5" />
                             <span className="sr-only">Notificaciones</span>
                             {showNotificationDot && (

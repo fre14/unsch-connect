@@ -113,8 +113,8 @@ export default function SchedulePage() {
                     <ToggleGroupItem value="mes">Mes</ToggleGroupItem>
                 </ToggleGroup>
                 <div className="flex items-center">
-                    <Button variant="outline" size="icon" onClick={handlePrev} className="rounded-r-none"><ChevronLeft/></Button>
-                    <Button variant="outline" size="icon" onClick={handleNext} className="rounded-l-none border-l-0"><ChevronRight/></Button>
+                    <Button variant="outline" size="icon" onClick={handlePrev} className="rounded-r-none" aria-label={view === 'semana' ? 'Semana anterior' : 'Mes anterior'}><ChevronLeft/></Button>
+                    <Button variant="outline" size="icon" onClick={handleNext} className="rounded-l-none border-l-0" aria-label={view === 'semana' ? 'Siguiente semana' : 'Siguiente mes'}><ChevronRight/></Button>
                 </div>
                 <Dialog>
                     <DialogTrigger asChild>

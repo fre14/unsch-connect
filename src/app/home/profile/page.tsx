@@ -68,7 +68,7 @@ export default function ProfilePage() {
         <div className="max-w-3xl mx-auto space-y-6">
             <Card className="overflow-hidden shadow-md">
                 <div className="relative w-full h-36 md:h-48 bg-muted">
-                    <Image src={coverImage} alt="Profile Banner" fill className="object-cover" />
+                    <Image src={coverImage} alt="Profile Banner" fill priority className="object-cover" />
                 </div>
                 <CardContent className="p-4 sm:p-6">
                     <div className="flex items-end gap-4 -mt-16 sm:-mt-20">

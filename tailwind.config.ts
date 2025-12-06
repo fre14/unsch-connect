@@ -12,8 +12,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', ...fontFamily.sans],
-        headline: ['Space Grotesk', ...fontFamily.sans],
+        body: ['var(--font-inter)', ...fontFamily.sans],
+        headline: ['var(--font-space-grotesk)', ...fontFamily.sans],
       },
       colors: {
         background: 'hsl(var(--background))',
