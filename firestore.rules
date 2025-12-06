@@ -38,12 +38,20 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allow public read access to posts, but restrict writes to the author.
+     * @description Allow public read access to posts.
+     * Writes are restricted:
+     * - Create: Only by the author.
+     * - Update: Author can edit content. Any user can update 'likedBy' or 'repostedBy'.
+     * - Delete: Only by the author.
      */
     match /posts/{postId} {
       allow read: if true;
       allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.authorId == request.auth.uid;
+      // Allow author to update everything.
+      // Allow any authenticated user to update ONLY the likedBy or repostedBy fields.
+      allow update: if request.auth != null && 
+                    (resource.data.authorId == request.auth.uid || 
+                     (request.resource.data.keys().diff(resource.data.keys()).hasOnly(['likedBy', 'repostedBy'])));
       allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
     }
 
@@ -84,5 +92,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

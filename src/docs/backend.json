@@ -317,6 +317,10 @@
             "task"
           ],
           "description": "The type of schedule item."
+        },
+        "description": {
+            "type": "string",
+            "description": "Optional details about the schedule item."
         }
       },
       "required": [

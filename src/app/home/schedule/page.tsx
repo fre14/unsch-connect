@@ -5,9 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, ChevronLeft, ChevronRight, XCircle, LoaderCircle, Edit, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { format, isSameDay, isSameMonth, startOfMonth, endOfMonth, parseISO } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -20,6 +20,7 @@ import { useFirestore, useFirebase, useCollection, useMemoFirebase } from "@/fir
 import { collection, addDoc, serverTimestamp, query, orderBy, Timestamp, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 const scheduleFormSchema = z.object({
   courseName: z.string().min(1, "El título es requerido."),
@@ -28,6 +29,7 @@ const scheduleFormSchema = z.object({
   location: z.string().optional(),
   type: z.enum(["class", "event", "task"], { required_error: "El tipo es requerido."}),
   date: z.date({ required_error: "La fecha es requerida."}),
+  description: z.string().optional(),
 });
 
 type ScheduleFormValues = z.infer<typeof scheduleFormSchema>;
@@ -43,6 +45,7 @@ type ScheduleItem = {
     type: 'class' | 'event' | 'task';
     date: Date;
     dayOfWeek: string;
+    description?: string;
 }
 
 const getTypeBadge = (type: ScheduleItem['type']) => {
@@ -65,6 +68,7 @@ function AddOrEditScheduleForm({ setDialogOpen, editingItem }: { setDialogOpen: 
             startTime: "",
             endTime: "",
             location: "",
+            description: "",
         },
     });
 
@@ -77,9 +81,18 @@ function AddOrEditScheduleForm({ setDialogOpen, editingItem }: { setDialogOpen: 
                 startTime: editingItem.startTime,
                 endTime: editingItem.endTime,
                 location: editingItem.location || "",
+                description: editingItem.description || "",
             });
         } else {
-            form.reset();
+            form.reset({
+                courseName: "",
+                startTime: "",
+                endTime: "",
+                location: "",
+                description: "",
+                type: undefined,
+                date: new Date(),
+            });
         }
     }, [editingItem, form]);
 
@@ -126,6 +139,7 @@ function AddOrEditScheduleForm({ setDialogOpen, editingItem }: { setDialogOpen: 
                     <FormField control={form.control} name="endTime" render={({ field }) => (<FormItem><FormLabel>Hora de fin</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
                  <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Aula (Opcional)</FormLabel><FormControl><Input placeholder="Ej: B-301" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descripción (Opcional)</FormLabel><FormControl><Textarea placeholder="Añade detalles adicionales aquí..." {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <Button type="submit" className="w-full mt-2" disabled={form.formState.isSubmitting}>
                     {form.formState.isSubmitting ? "Guardando..." : (editingItem ? "Guardar Cambios" : "Guardar Evento")}
                 </Button>
@@ -153,11 +167,14 @@ export default function SchedulePage() {
 
   const scheduleItems: ScheduleItem[] = useMemo(() => {
     if (!rawScheduleData) return [];
-    return rawScheduleData.map(item => ({
-      ...item,
-      id: item.id,
-      date: item.date instanceof Timestamp ? item.date.toDate() : (typeof item.date === 'string' ? parseISO(item.date) : new Date(item.date)),
-    })).filter(item => item.date instanceof Date && !isNaN(item.date.valueOf())) as ScheduleItem[];
+    return rawScheduleData.map(item => {
+        const date = item.date instanceof Timestamp ? item.date.toDate() : new Date(item.date);
+        return {
+            ...item,
+            id: item.id,
+            date: date,
+        };
+    }).filter(item => item.date instanceof Date && !isNaN(item.date.valueOf())) as ScheduleItem[];
   }, [rawScheduleData]);
 
   const monthEvents = useMemo(() => {
@@ -248,7 +265,7 @@ export default function SchedulePage() {
                     </h2>
                      <div className="space-y-3">
                         {monthEvents.length > 0 ? monthEvents.map((item) => (
-                             <div key={item.id} className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors shadow-sm flex items-center gap-4 group">
+                             <div key={item.id} className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors shadow-sm flex items-start gap-4 group">
                                 <div className="flex-shrink-0 text-center w-16">
                                     <p className="font-semibold text-sm leading-tight">{item.startTime}</p>
                                     <p className="text-xs text-muted-foreground">{item.endTime}</p>
@@ -258,7 +275,8 @@ export default function SchedulePage() {
                                         <p className="font-semibold text-base leading-tight">{item.courseName}</p>
                                         {getTypeBadge(item.type)}
                                     </div>
-                                    {item.location && <p className="text-sm text-muted-foreground">{item.location}</p>}
+                                    {item.location && <p className="text-sm text-muted-foreground font-medium">{item.location}</p>}
+                                    {item.description && <p className="text-sm text-muted-foreground mt-1">{item.description}</p>}
                                 </div>
                                 <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(item)}><Edit className="h-4 w-4" /></Button>
@@ -294,6 +312,9 @@ export default function SchedulePage() {
             .has-event:not([aria-selected]) {
                 position: relative;
             }
+            .has-event:not([aria-selected]):not([aria-disabled]) > .rdp-button:hover {
+                background-color: hsl(var(--accent));
+            }
             .has-event:not([aria-selected])::after {
                 content: '';
                 position: absolute;
@@ -305,9 +326,10 @@ export default function SchedulePage() {
                 border-radius: 50%;
                 background-color: hsl(var(--primary));
             }
+             .rdp-day_selected.has-event::after {
+                background-color: hsl(var(--primary-foreground));
+            }
         `}</style>
     </div>
   );
 }
-
-    

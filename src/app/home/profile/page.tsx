@@ -27,10 +27,18 @@ export default function ProfilePage() {
     // Memoize the query to prevent re-creation on every render
     const userPostsQuery = useMemoFirebase(() => {
         if (!firestore || !user) return null;
-        return query(collection(firestore, 'posts'), where('authorId', '==', user.uid), orderBy('createdAt', 'desc'));
+        // Query for posts created by the user OR reposted by the user
+        return query(collection(firestore, 'posts'), orderBy('createdAt', 'desc'));
     }, [firestore, user]);
 
-    const { data: userPosts, isLoading: arePostsLoading } = useCollection<DocumentData>(userPostsQuery);
+    const { data: allPosts, isLoading: arePostsLoading } = useCollection<DocumentData>(allPostsQuery);
+
+    const { userPosts, userReposts } = useMemo(() => {
+        if (!allPosts || !user) return { userPosts: [], userReposts: [] };
+        const posts = allPosts.filter(post => post.authorId === user.uid && !post.originalPostId);
+        const reposts = allPosts.filter(post => post.authorId === user.uid && post.originalPostId);
+        return { userPosts: posts, userReposts: reposts };
+    }, [allPosts, user]);
 
      const formatPostTime = (timestamp: any) => {
         if (!timestamp) return 'hace un momento';
@@ -162,12 +170,33 @@ export default function ProfilePage() {
                     </div>
                 </TabsContent>
                 <TabsContent value="reposts">
-                    <div className="space-y-6 mt-6">
-                         <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card">
-                            <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                            <h3 className="mt-4 text-xl font-semibold text-foreground">Sin reposts</h3>
-                            <p className="mt-2">Este usuario aún no ha compartido ninguna publicación.</p>
-                        </Card>
+                     <div className="space-y-6 mt-6">
+                        {arePostsLoading ? (
+                           <div className="flex flex-col items-center justify-center pt-20">
+                                <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+                                <p className="mt-4 text-muted-foreground">Cargando tus reposts...</p>
+                            </div>
+                        ) : userReposts && userReposts.length > 0 ? (
+                           userReposts.map((post) => {
+                                const postProps: PostProps = {
+                                    id: post.id,
+                                    authorId: post.authorId,
+                                    time: formatPostTime(post.createdAt),
+                                    content: post.content,
+                                    likedBy: post.likedBy || [],
+                                    repostedBy: post.repostedBy || [],
+                                    originalPostId: post.originalPostId,
+                                    originalAuthorId: post.originalAuthorId,
+                                };
+                                return <PostCard key={post.id} {...postProps} />;
+                            })
+                        ) : (
+                            <Card className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg bg-card">
+                                <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                                <h3 className="mt-4 text-xl font-semibold text-foreground">Sin reposts</h3>
+                                <p className="mt-2">Aún no has compartido ninguna publicación.</p>
+                            </Card>
+                        )}
                     </div>
                 </TabsContent>
             </Tabs>
