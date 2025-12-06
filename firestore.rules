@@ -33,7 +33,7 @@ service cloud.firestore {
     match /userProfiles/{userProfileId} {
       allow get: if isOwner(userProfileId);
       allow list: if false; // User listing is disabled for privacy.
-      allow create: if isOwner(userProfileId) && request.resource.data.role == 'student_teacher';
+      allow create: if isOwner(userProfileId);
       allow update: if isOwner(userProfileId) && request.resource.data.keys().diff(resource.data.keys()).hasOnly(['role']) == false;
     }
 
