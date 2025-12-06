@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, ChevronLeft, ChevronRight, XCircle, LoaderCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { addDays, format, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, addWeeks, isSameDay, parseISO } from "date-fns";
+import { addDays, format, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, addWeeks, isSameDay, parseISO, isTomorrow } from "date-fns";
 import { es } from "date-fns/locale";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -259,24 +259,38 @@ export default function SchedulePage() {
     if (!rawScheduleData) return [];
     return rawScheduleData.map(item => ({
       ...item,
-      // Firestore Timestamps need to be converted to JS Date objects
+      id: item.id,
       date: item.date instanceof Timestamp ? item.date.toDate() : (typeof item.date === 'string' ? parseISO(item.date) : item.date),
     })) as ScheduleItem[];
   }, [rawScheduleData]);
+
+  // Effect for notifications
+  useEffect(() => {
+    const notifiedEvents = new Set<string>();
+    scheduleItems.forEach(item => {
+        if (isTomorrow(item.date) && !notifiedEvents.has(item.id)) {
+            toast({
+                title: 'Recordatorio de Evento',
+                description: `Mañana tienes: ${item.courseName} a las ${item.startTime}.`,
+            });
+            notifiedEvents.add(item.id);
+        }
+    });
+  }, [scheduleItems]);
 
   const scheduleData = useMemo<ScheduleByDay>(() => {
     const data: ScheduleByDay = { lunes: [], martes: [], miercoles: [], jueves: [], viernes: [], sabado: [], domingo: [] };
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
     const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
 
-    scheduleItems
-        .filter(item => item.date >= weekStart && item.date <= weekEnd)
-        .forEach(item => {
+    scheduleItems.forEach(item => {
+        if (item.date >= weekStart && item.date <= weekEnd) {
             const dayName = format(item.date, 'eeee', { locale: es }).toLowerCase();
             if (data[dayName]) {
                 data[dayName].push(item);
             }
-        });
+        }
+    });
     return data;
   }, [scheduleItems, currentDate]);
 
@@ -351,7 +365,7 @@ export default function SchedulePage() {
                         <div className="flex h-full min-w-max sm:min-w-full">
                             {weekDays.map((day, index) => (
                             <React.Fragment key={day.toString()}>
-                                <DayColumn day={weekDayNames[index]} items={scheduleData[weekDayNames[index]]} date={day} />
+                                <DayColumn day={weekDayNames[index]} items={scheduleData[weekDayNames[index]] || []} date={day} />
                             </React.Fragment>
                             ))}
                         </div>
@@ -406,5 +420,3 @@ export default function SchedulePage() {
     </div>
   );
 }
-
-    
