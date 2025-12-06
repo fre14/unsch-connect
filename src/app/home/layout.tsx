@@ -56,12 +56,12 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     } else {
       params.delete('search');
     }
-    // For community page, we handle search client-side, so no need to push to router
-    if (pathname !== '/home/community') {
+    // Only push to router for pages that handle server-side search
+    if (pathname.startsWith('/home/announcements')) {
       router.replace(`${pathname}?${params.toString()}`);
     }
   };
-
+  
   // Pass searchTerm to children if it's a valid React element
   const childrenWithProps = React.isValidElement(children)
     ? React.cloneElement(children as React.ReactElement<any>, { searchTerm })
@@ -152,9 +152,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
   const SearchBar = () => {
     let placeholder = "Buscar...";
-    if (pathname === '/home/announcements') {
+    if (pathname.startsWith('/home/announcements')) {
       placeholder = "Buscar en anuncios...";
-    } else if (pathname === '/home/community') {
+    } else if (pathname.startsWith('/home/community')) {
       placeholder = "Buscar publicaciones, personas o carreras...";
     }
 
@@ -194,7 +194,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
               </SheetContent>
             </Sheet>
             <div className="w-full flex-1">
-               {(pathname === '/home/announcements' || pathname === '/home/community') && <SearchBar />}
+               {(pathname.startsWith('/home/announcements') || pathname.startsWith('/home/community')) && <SearchBar />}
             </div>
             
             <DropdownMenu onOpenChange={(open) => !open && setShowNotificationDot(false)}>
@@ -241,7 +241,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
           </header>
           <main className="flex-1 overflow-auto p-4 sm:p-6 bg-background">{childrenWithProps}</main>
-          {pathname === '/home/community' && <MobileCreatePostDialog />}
+          {pathname.startsWith('/home/community') && <MobileCreatePostDialog />}
         </div>
       </div>
     </TooltipProvider>

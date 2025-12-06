@@ -56,19 +56,21 @@ function CreateAnnouncementForm({ setDialogOpen }: { setDialogOpen: (open: boole
             course: 'General',
         };
 
-        try {
-            await addDoc(announcementCollectionRef, newAnnouncement);
-            toast({ title: "Anuncio publicado", description: "El anuncio ahora es visible para todos." });
-            form.reset();
-            setDialogOpen(false);
-        } catch (error) {
-            const permissionError = new FirestorePermissionError({
-                path: announcementCollectionRef.path,
-                operation: 'create',
-                requestResourceData: newAnnouncement,
+        addDoc(announcementCollectionRef, newAnnouncement)
+            .then(() => {
+                 toast({ title: "Anuncio publicado", description: "El anuncio ahora es visible para todos." });
+                 form.reset();
+                 setDialogOpen(false);
+            })
+            .catch(error => {
+                const permissionError = new FirestorePermissionError({
+                    path: announcementCollectionRef.path,
+                    operation: 'create',
+                    requestResourceData: newAnnouncement,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                 toast({ variant: "destructive", title: "Error de Permiso", description: "No tienes permiso para crear un anuncio." });
             });
-            errorEmitter.emit('permission-error', permissionError);
-        }
     }
     
     return (
@@ -131,7 +133,7 @@ function CreateAnnouncementForm({ setDialogOpen }: { setDialogOpen: (open: boole
 }
 
 
-export default function AnnouncementsPage() {
+export default function AnnouncementsPage({ searchTerm: layoutSearchTerm }: { searchTerm: string }) {
     const searchParams = useSearchParams();
     const firestore = useFirestore();
     const { userProfile } = useUser();
@@ -142,21 +144,21 @@ export default function AnnouncementsPage() {
     const canCreateAnnouncement = userProfile?.role === 'official' || userProfile?.role === 'admin';
 
     useEffect(() => {
-        setSearchTerm(searchParams.get('search') || '');
-    }, [searchParams]);
+        setSearchTerm(layoutSearchTerm || searchParams.get('search') || '');
+    }, [layoutSearchTerm, searchParams]);
 
     const announcementsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        const baseQuery = collection(firestore, 'announcements');
+        let q: Query = collection(firestore, 'announcements');
         
         if (category !== 'all') {
-            return query(baseQuery, where('category', '==', category), orderBy('createdAt', 'desc'));
+            q = query(q, where('category', '==', category));
         }
         
-        return query(baseQuery, orderBy('createdAt', 'desc'));
+        return query(q, orderBy('createdAt', 'desc'));
     }, [firestore, category]);
 
-    const { data: rawAnnouncements, isLoading } = useCollection(announcementsQuery as Query | null);
+    const { data: rawAnnouncements, isLoading } = useCollection(announcementsQuery);
 
     const filteredAnnouncements = useMemo(() => {
         if (!rawAnnouncements) return [];

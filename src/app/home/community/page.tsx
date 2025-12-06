@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { PostCard, PostProps } from '@/components/post-card';
 import { CreatePost } from '@/components/create-post';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, DocumentData } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { XCircle } from 'lucide-react';
@@ -20,7 +20,7 @@ export default function CommunityPage({ searchTerm }: { searchTerm: string }) {
   }, [firestore]);
   
   // El hook se mantiene igual, pero los datos se filtrarán de forma diferente.
-  const { data: posts, isLoading } = useCollection(postsQuery);
+  const { data: posts, isLoading } = useCollection<DocumentData & {authorId: string; content: string; createdAt: any; likeIds: string[]; commentIds: string[] }>(postsQuery);
 
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
@@ -50,7 +50,6 @@ export default function CommunityPage({ searchTerm }: { searchTerm: string }) {
 
   return (
     <div className="max-w-2xl mx-auto relative">
-      <h1 className="font-headline text-3xl font-bold mb-6 sr-only">Comunidad Estudiantil</h1>
       <div className="space-y-4">
         <div className='hidden sm:block'>
           <CreatePost />

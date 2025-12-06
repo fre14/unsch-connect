@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { useUser } from '@/context/user-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useMemoFirebase, useFirestore, useFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, DocumentData } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import React, { useMemo } from 'react';
@@ -28,7 +28,7 @@ export default function ProfilePage() {
         return query(collection(firestore, 'posts'), orderBy('createdAt', 'desc'));
     }, [firestore]);
 
-    const { data: allPosts, isLoading: arePostsLoading } = useCollection(allPostsQuery);
+    const { data: allPosts, isLoading: arePostsLoading } = useCollection<DocumentData>(allPostsQuery);
 
     // Filter posts on the client-side
     const userPosts = useMemo(() => {

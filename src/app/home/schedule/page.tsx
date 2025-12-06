@@ -266,6 +266,8 @@ export default function SchedulePage() {
 
   // Effect for notifications
   useEffect(() => {
+    if(!scheduleItems || scheduleItems.length === 0) return;
+    
     const notifiedEvents = new Set<string>();
     scheduleItems.forEach(item => {
         if (isTomorrow(item.date) && !notifiedEvents.has(item.id)) {
@@ -284,8 +286,9 @@ export default function SchedulePage() {
     const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
 
     scheduleItems.forEach(item => {
-        if (item.date >= weekStart && item.date <= weekEnd) {
-            const dayName = format(item.date, 'eeee', { locale: es }).toLowerCase();
+        const itemDate = item.date;
+        if (itemDate >= weekStart && itemDate <= weekEnd) {
+            const dayName = format(itemDate, 'eeee', { locale: es }).toLowerCase();
             if (data[dayName]) {
                 data[dayName].push(item);
             }
