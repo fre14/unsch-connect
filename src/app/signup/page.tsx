@@ -53,7 +53,20 @@ const passwordSchema = z.string().min(8, 'La contraseña debe tener al menos 8 c
 const baseSchema = z.object({
   firstName: z.string().min(1, "El nombre es requerido."),
   lastName: z.string().min(1, "El apellido es requerido."),
-  email: z.string().email("Correo inválido").refine(email => email.endsWith('@unsch.edu.pe'), { message: 'Debe ser un correo institucional.' }),
+  email: z.string().email("Correo inválido").refine(
+    (email) => email.endsWith('@unsch.edu.pe'), {
+      message: 'Debe ser un correo institucional de la UNSCH.'
+    }
+  ).refine(
+    (email) => {
+      // Expresión regular para validar el formato nombre.apellido.codigo@unsch.edu.pe
+      const emailRegex = /^[a-z]+\.[a-z]+\.\d{2}@unsch\.edu\.pe$/;
+      return emailRegex.test(email);
+    },
+    {
+      message: "El formato debe ser 'nombre.apellido.codigo@unsch.edu.pe' (ej: juan.perez.01@unsch.edu.pe)."
+    }
+  ),
   password: passwordSchema,
   confirmPassword: passwordSchema,
 });
@@ -245,7 +258,7 @@ export default function SignUpPage() {
                     <FormItem><FormLabel>¿Qué eres?</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona un rol" /></SelectTrigger></FormControl><SelectContent><SelectItem value="student">Estudiante</SelectItem><SelectItem value="teacher">Profesor</SelectItem><SelectItem value="official">Cuenta Oficial UNSCH</SelectItem><SelectItem value="admin">Administrador</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                 )} />
 
-                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Correo Institucional</FormLabel><FormControl><Input placeholder="codigo@unsch.edu.pe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Correo Institucional</FormLabel><FormControl><Input placeholder="nombre.apellido.codigo@unsch.edu.pe" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 
                 {renderConditionalFields()}
               
