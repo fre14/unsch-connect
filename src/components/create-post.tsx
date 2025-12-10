@@ -5,41 +5,53 @@ import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Image as ImageIcon, X } from "lucide-react";
+import { Image as ImageIcon, X, LoaderCircle } from "lucide-react";
 import { useUser } from "@/context/user-context";
 import { Card, CardContent } from "./ui/card";
 import { useFirestore, useFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { toast } from "@/hooks/use-toast";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { errorEmitter } from "@/firebase/error-emitter";
+import { v4 as uuidv4 } from 'uuid';
 
 export function CreatePost() {
   const { avatar, userProfile, isUserLoading } = useUser();
-  const { user } = useFirebase();
+  const { user, firebaseApp } = useFirebase();
   const firestore = useFirestore();
   const [content, setContent] = React.useState("");
-  const [image, setImage] = React.useState<string | null>(null);
+  const [imageFile, setImageFile] = React.useState<File | null>(null);
+  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
   const [isPublishing, setIsPublishing] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImage(reader.result as string);
+        setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
+  
+  const clearImage = () => {
+      setImageFile(null);
+      setImagePreview(null);
+      if(fileInputRef.current) {
+          fileInputRef.current.value = "";
+      }
+  }
 
   const handlePublish = async () => {
-    if (!content.trim() && !image) {
+    if (!content.trim() && !imageFile) {
       return;
     }
     
-    if (isUserLoading || !userProfile || !user || !firestore) {
+    if (isUserLoading || !userProfile || !user || !firestore || !firebaseApp) {
         toast({
             variant: "destructive",
             title: "Error",
@@ -49,43 +61,55 @@ export function CreatePost() {
     }
 
     setIsPublishing(true);
+    let imageUrl: string | null = null;
 
-    const newPost: any = {
-      authorId: user.uid,
-      content: content,
-      postType: image ? 'photo' : 'text',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      likedBy: [],
-      repostedBy: [],
-      commentIds: [],
-    };
+    try {
+        if (imageFile) {
+            const storage = getStorage(firebaseApp);
+            const imageId = uuidv4();
+            const storageRef = ref(storage, `posts/${user.uid}/${imageId}`);
+            
+            const snapshot = await uploadBytes(storageRef, imageFile);
+            imageUrl = await getDownloadURL(snapshot.ref);
+        }
 
-    if (image) {
-      newPost.imageUrl = image;
-    }
+        const newPost: any = {
+          authorId: user.uid,
+          content: content,
+          postType: imageUrl ? 'photo' : 'text',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          likedBy: [],
+          repostedBy: [],
+          commentIds: [],
+          ...(imageUrl && { imageUrl: imageUrl }),
+        };
 
-    const postsCollectionRef = collection(firestore, "posts");
-    addDoc(postsCollectionRef, newPost)
-        .then(() => {
-            setContent("");
-            setImage(null);
-            toast({
-                title: "¡Publicado!",
-                description: "Tu publicación ha sido compartida con la comunidad.",
-            });
-        })
-        .catch((error: any) => {
+        const postsCollectionRef = collection(firestore, "posts");
+        await addDoc(postsCollectionRef, newPost);
+        
+        setContent("");
+        clearImage();
+        toast({
+            title: "¡Publicado!",
+            description: "Tu publicación ha sido compartida con la comunidad.",
+        });
+
+    } catch (error: any) {
+         console.error("Publishing error:", error);
+         if (error.code?.startsWith('storage/')) {
+             toast({ variant: "destructive", title: "Error de Subida", description: "No se pudo subir la imagen. Verifica tu conexión o los permisos." });
+         } else {
             const permissionError = new FirestorePermissionError({
-                path: postsCollectionRef.path,
+                path: 'posts',
                 operation: 'create',
-                requestResourceData: newPost,
+                requestResourceData: { content: content },
             });
             errorEmitter.emit('permission-error', permissionError);
-        })
-        .finally(() => {
-            setIsPublishing(false);
-        });
+         }
+    } finally {
+        setIsPublishing(false);
+    }
   };
 
   return (
@@ -106,14 +130,14 @@ export function CreatePost() {
               disabled={isPublishing}
             />
 
-            {image && (
+            {imagePreview && (
               <div className="relative mt-2">
-                <Image src={image} alt="Vista previa" width={500} height={300} className="rounded-lg object-cover w-full h-auto" />
+                <Image src={imagePreview} alt="Vista previa" width={500} height={300} className="rounded-lg object-cover w-full h-auto" />
                 <Button 
                   variant="destructive" 
                   size="icon" 
                   className="absolute top-2 right-2 h-7 w-7 rounded-full"
-                  onClick={() => setImage(null)}
+                  onClick={clearImage}
                   disabled={isPublishing}
                   aria-label="Quitar imagen"
                 >
@@ -136,8 +160,13 @@ export function CreatePost() {
                       <ImageIcon className="h-5 w-5" />
                     </Button>
                 </div>
-              <Button className="rounded-full" onClick={handlePublish} disabled={(!content.trim() && !image) || isPublishing}>
-                {isPublishing ? "Publicando..." : "Publicar"}
+              <Button className="rounded-full" onClick={handlePublish} disabled={(!content.trim() && !imageFile) || isPublishing}>
+                {isPublishing ? (
+                    <>
+                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                        Publicando...
+                    </>
+                ) : "Publicar"}
               </Button>
             </div>
           </div>

@@ -107,7 +107,8 @@ export default function SettingsPage() {
                                 <Label>Foto de Perfil</Label>
                                 <ImageUpload 
                                     initialImage={avatar} 
-                                    onImageChange={setAvatar} 
+                                    onImageChange={setAvatar}
+                                    storagePath="avatars"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -116,6 +117,7 @@ export default function SettingsPage() {
                                     initialImage={coverImage} 
                                     onImageChange={setCoverImage}
                                     aspectRatio="aspect-[16/5]"
+                                    storagePath="covers"
                                 />
                             </div>
                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

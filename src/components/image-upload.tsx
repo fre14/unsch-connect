@@ -3,34 +3,60 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Camera } from "lucide-react";
+import { Camera, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useFirebase } from "@/firebase";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { v4 as uuidv4 } from 'uuid';
+import { toast } from "@/hooks/use-toast";
 
 interface ImageUploadProps {
     initialImage: string;
     onImageChange: (newImage: string) => void;
     aspectRatio?: string;
+    storagePath: 'avatars' | 'covers'; // Path in storage
 }
 
-export function ImageUpload({ initialImage, onImageChange, aspectRatio = "aspect-square" }: ImageUploadProps) {
+export function ImageUpload({ initialImage, onImageChange, aspectRatio = "aspect-square", storagePath }: ImageUploadProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(initialImage);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, firebaseApp } = useFirebase();
 
   useEffect(() => {
     setImagePreview(initialImage);
   }, [initialImage]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setImagePreview(result);
-        onImageChange(result);
-      };
-      reader.readAsDataURL(file);
+    if (!file || !user || !firebaseApp) return;
+
+    setIsUploading(true);
+
+    // Show instant preview
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+
+    try {
+        const storage = getStorage(firebaseApp);
+        const imageId = uuidv4();
+        const fullStoragePath = `${storagePath}/${user.uid}/${imageId}`;
+        const storageRef = ref(storage, fullStoragePath);
+        
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        onImageChange(downloadURL); // Pass the final URL up to the parent
+        setImagePreview(downloadURL); // Update preview to final URL
+
+    } catch (error) {
+        console.error("Error uploading image:", error);
+        toast({ variant: "destructive", title: "Error de Subida", description: "No se pudo subir la imagen."});
+        setImagePreview(initialImage); // Revert to initial image on error
+    } finally {
+        setIsUploading(false);
     }
   };
 
@@ -49,7 +75,7 @@ export function ImageUpload({ initialImage, onImageChange, aspectRatio = "aspect
                 <AvatarFallback>U</AvatarFallback>
             </Avatar>
         ) : (
-            <div className={cn("relative w-32 rounded-md overflow-hidden", aspectRatio)}>
+            <div className={cn("relative w-32 rounded-md overflow-hidden bg-muted", aspectRatio)}>
                 {imagePreview && <Image src={imagePreview} alt="Preview" fill className="object-cover" />}
             </div>
         )}
@@ -58,8 +84,9 @@ export function ImageUpload({ initialImage, onImageChange, aspectRatio = "aspect
             size="icon" 
             className="absolute bottom-0 right-0 rounded-full h-7 w-7 bg-card hover:bg-muted -translate-x-1 translate-y-1"
             onClick={handleButtonClick}
+            disabled={isUploading}
             >
-            <Camera className="h-4 w-4 text-muted-foreground" />
+            {isUploading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4 text-muted-foreground" />}
             <span className="sr-only">Change image</span>
         </Button>
       </div>
@@ -69,9 +96,12 @@ export function ImageUpload({ initialImage, onImageChange, aspectRatio = "aspect
         onChange={handleImageChange}
         className="hidden"
         accept="image/png, image/jpeg"
+        disabled={isUploading}
       />
       <div>
-        <Button variant="outline" onClick={handleButtonClick}>Cambiar Foto</Button>
+        <Button variant="outline" onClick={handleButtonClick} disabled={isUploading}>
+            {isUploading ? "Subiendo..." : "Cambiar Foto"}
+        </Button>
         <p className="text-xs text-muted-foreground mt-2">JPG o PNG. Máximo 5MB.</p>
       </div>
     </div>
