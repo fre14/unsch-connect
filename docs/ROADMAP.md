@@ -45,7 +45,7 @@ Con una base estable, se añadieron funcionalidades para aumentar la interacció
 
 En esta fase, se integraron servicios universitarios de manera más profunda en la plataforma.
 
-- **[✓] Integración de Calendario Académico Oficial:** Calendario público con fechas clave de la universidad.
+
 - **[✓] Notificaciones Push:** Configuración de Firebase Cloud Messaging para anuncios importantes.
 - **[✓] Grupos y Comunidades Temáticas:** Se habilitó la creación de grupos por carrera, facultad o intereses, con feeds y roles internos.
 
@@ -53,10 +53,8 @@ En esta fase, se integraron servicios universitarios de manera más profunda en 
 
 ## Fase 5: Ecosistema Digital y Herramientas de IA - (COMPLETADO: H2 2025)
 
-La fase final transformó a UNSCH Connect en una herramienta indispensable, culminando el proyecto el 8 de diciembre de 2025.
 
-- **[✓] Marketplace Estudiantil (Julio - Agosto 2025):** Espacio seguro para que los estudiantes ofrezcan productos y servicios.
-- **[✓] Módulo de Oportunidades Laborales (Septiembre 2025):** Publicación de ofertas de prácticas y empleo.
-- **[✓] Implementación de IA con Genkit (Octubre - Noviembre 2025):** Se desarrolló un chatbot de asistencia y un sistema de sugerencias inteligentes.
-- **[✓] Gamificación y Logros (Noviembre 2025):** Sistema de insignias por actividad para incentivar el uso.
-- **[✓] Lanzamiento Oficial de la Versión 2.0 (8 de diciembre de 2025):** El proyecto se completó y se lanzó a toda la comunidad universitaria en la fecha prevista.
+
+
+
+- **[✓] Lanzamiento local network de la Versión 2.0 (8 de diciembre de 2025):** El proyecto se completó y se realizó el lanzamiento final en la red local de la universidad, cumpliendo con todos los requisitos y funcionalidades implementadas a lo largo de las fases anteriores.
