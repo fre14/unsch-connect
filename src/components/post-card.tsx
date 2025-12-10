@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, 'useEffect', useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -203,26 +204,27 @@ export type PostProps = {
   authorId: string;
   time: string;
   content: string;
+  imageUrl?: string;
   likedBy?: string[];
   repostedBy?: string[];
   originalPostId?: string;
   originalAuthorId?: string;
-  imageId?: string;
   imageAlt?: string;
   isOfficial?: boolean;
   authorOverride?: { name: string };
 };
 
 export function PostCard(props: PostProps) {
-    const { id, authorId, time, content, imageId, imageAlt, isOfficial = false, authorOverride, likedBy = [], repostedBy = [], originalPostId, originalAuthorId } = props;
+    const { id, authorId, time, content, imageUrl, imageAlt, isOfficial = false, authorOverride, likedBy = [], repostedBy = [], originalPostId, originalAuthorId } = props;
     const { user } = useFirebase();
     const firestore = useFirestore();
 
     // State for optimistic UI updates
     const [hasLiked, setHasLiked] = useState(user ? likedBy.includes(user.uid) : false);
     const [likeCount, setLikeCount] = useState(likedBy.length);
-    const [repostCount, setRepostCount] = useState(repostedBy.length);
     const [hasReposted, setHasReposted] = useState(user ? repostedBy.includes(user.uid) : false);
+    const [repostCount, setRepostCount] = useState(repostedBy.length);
+
 
     // State for local hide on report
     const [isHidden, setIsHidden] = useState(false);
@@ -261,7 +263,7 @@ export function PostCard(props: PostProps) {
 
     const { data: originalPostData, isLoading: isOriginalPostLoading } = useDoc<DocumentData>(originalPostQuery);
     
-    const postImageUrl = imageId ? getImageUrl(imageId) : null;
+    const postImageUrl = imageUrl || (imageAlt ? getImageUrl(imageAlt) : null);
   
     const authorName = authorOverride?.name || (authorProfile ? `${authorProfile.firstName} ${authorProfile.lastName}`.trim() || authorProfile.email?.split('@')[0] : 'Usuario');
     const authorUsername = authorProfile ? authorProfile.email?.split('@')[0] : '...';
@@ -344,6 +346,7 @@ export function PostCard(props: PostProps) {
                     originalAuthorId: authorId,
                     likedBy: [],
                     repostedBy: [],
+                    ...(imageUrl && { imageUrl }),
                 };
                 await addDoc(collection(firestore, 'posts'), newPost);
                 await updateDoc(postDocRef, { repostedBy: arrayUnion(user.uid), updatedAt: serverTimestamp() });
@@ -472,7 +475,7 @@ export function PostCard(props: PostProps) {
                  )}
 
 
-                {postImageUrl && imageAlt && !originalPostId && (<div className="relative aspect-video w-full overflow-hidden rounded-lg border"><Image src={postImageUrl} alt={imageAlt} fill className="object-cover" /></div>)}
+                {postImageUrl && !originalPostId && (<div className="relative aspect-video w-full overflow-hidden rounded-lg border"><Image src={postImageUrl} alt={imageAlt || "Imagen de la publicación"} fill className="object-cover" /></div>)}
                 <div className="flex justify-between items-center pt-2 -ml-2">
                     <Dialog>
                         <DialogTrigger asChild>
@@ -483,8 +486,8 @@ export function PostCard(props: PostProps) {
                         </DialogTrigger>
                        <CommentsDialog postId={id} />
                     </Dialog>
-                    <Button variant="ghost" onClick={handleRepost} className="flex items-center gap-2 text-muted-foreground hover:text-green-500" aria-label={`${repostCount} reposts`} disabled={hasReposted}>
-                        <Repeat className={`h-5 w-5 ${hasReposted ? 'text-green-500' : ''}`} />
+                    <Button variant="ghost" onClick={handleRepost} className={`flex items-center gap-2 text-muted-foreground hover:text-green-500 ${hasReposted ? 'text-green-500' : ''}`} aria-label={`${repostCount} reposts`}>
+                        <Repeat className="h-5 w-5" />
                         <span className="text-sm">{repostCount}</span>
                     </Button>
                     <Button variant="ghost" onClick={handleLike} className="flex items-center gap-2 text-muted-foreground hover:text-red-500" aria-label={`${likeCount} me gusta`}>

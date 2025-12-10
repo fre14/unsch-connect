@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
+import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Image as ImageIcon, Globe } from "lucide-react";
+import { Image as ImageIcon, X } from "lucide-react";
 import { useUser } from "@/context/user-context";
 import { Card, CardContent } from "./ui/card";
 import { useFirestore, useFirebase } from "@/firebase";
@@ -18,14 +19,27 @@ export function CreatePost() {
   const { user } = useFirebase();
   const firestore = useFirestore();
   const [content, setContent] = React.useState("");
+  const [image, setImage] = React.useState<string | null>(null);
   const [isPublishing, setIsPublishing] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handlePublish = async () => {
-    if (!content.trim() || !user || !firestore) {
+    if (!content.trim() && !image) {
       return;
     }
     
-    if (isUserLoading || !userProfile) {
+    if (isUserLoading || !userProfile || !user || !firestore) {
         toast({
             variant: "destructive",
             title: "Error",
@@ -36,10 +50,10 @@ export function CreatePost() {
 
     setIsPublishing(true);
 
-    const newPost = {
+    const newPost: any = {
       authorId: user.uid,
       content: content,
-      postType: 'text',
+      postType: image ? 'photo' : 'text',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       likedBy: [],
@@ -47,10 +61,15 @@ export function CreatePost() {
       commentIds: [],
     };
 
+    if (image) {
+      newPost.imageUrl = image;
+    }
+
     const postsCollectionRef = collection(firestore, "posts");
     addDoc(postsCollectionRef, newPost)
         .then(() => {
             setContent("");
+            setImage(null);
             toast({
                 title: "¡Publicado!",
                 description: "Tu publicación ha sido compartida con la comunidad.",
@@ -86,12 +105,38 @@ export function CreatePost() {
               onChange={(e) => setContent(e.target.value)}
               disabled={isPublishing}
             />
+
+            {image && (
+              <div className="relative mt-2">
+                <Image src={image} alt="Vista previa" width={500} height={300} className="rounded-lg object-cover w-full h-auto" />
+                <Button 
+                  variant="destructive" 
+                  size="icon" 
+                  className="absolute top-2 right-2 h-7 w-7 rounded-full"
+                  onClick={() => setImage(null)}
+                  disabled={isPublishing}
+                  aria-label="Quitar imagen"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageChange}
+              className="hidden"
+              accept="image/png, image/jpeg, image/gif"
+            />
+            
             <div className="flex justify-between items-center pt-2">
                 <div className="flex gap-1 text-primary">
-                    <Button variant="ghost" size="icon" disabled={isPublishing} aria-label="Añadir imagen"><ImageIcon className="h-5 w-5" /></Button>
-                    <Button variant="ghost" size="icon" disabled={isPublishing} aria-label="Cambiar visibilidad"><Globe className="h-5 w-5" /></Button>
+                    <Button variant="ghost" size="icon" disabled={isPublishing} aria-label="Añadir imagen" onClick={() => fileInputRef.current?.click()}>
+                      <ImageIcon className="h-5 w-5" />
+                    </Button>
                 </div>
-              <Button className="rounded-full" onClick={handlePublish} disabled={!content.trim() || isPublishing}>
+              <Button className="rounded-full" onClick={handlePublish} disabled={(!content.trim() && !image) || isPublishing}>
                 {isPublishing ? "Publicando..." : "Publicar"}
               </Button>
             </div>
