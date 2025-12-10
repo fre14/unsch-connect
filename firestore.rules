@@ -49,10 +49,16 @@ service cloud.firestore {
       allow get, list: if true; // Public posts
       allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
       // Allow author to update everything.
-      // Allow any authenticated user to update ONLY the likedBy or repostedBy fields.
-      allow update: if request.auth != null && 
-                    (resource.data.authorId == request.auth.uid || 
-                     (request.resource.data.keys().diff(resource.data.keys()).hasOnly(['likedBy', 'repostedBy', 'updatedAt'])));
+      // Allow any authenticated user to update ONLY the interaction fields.
+      allow update: if request.auth != null && (
+        // Case 1: The user is the author of the post.
+        resource.data.authorId == request.auth.uid ||
+        // Case 2: Any authenticated user can like, unlike, repost, or un-repost.
+        // This rule ensures that only the specified fields can be modified.
+        request.resource.data.keys().removeAll(['likedBy', 'repostedBy', 'updatedAt']).size() == resource.data.keys().removeAll(['likedBy', 'repostedBy', 'updatedAt']).size() &&
+        request.resource.data.content == resource.data.content &&
+        request.resource.data.authorId == resource.data.authorId
+      );
       allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
     }
 
@@ -93,5 +99,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
