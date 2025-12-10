@@ -320,7 +320,7 @@ export function PostCard(props: PostProps) {
                 <div className='flex justify-between items-start'>
                     <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-semibold font-headline hover:underline cursor-pointer">{authorName}</p>
+                            <Link href={`/home/profile/${displayAuthorId}`} className="font-semibold font-headline hover:underline cursor-pointer">{authorName}</Link>
                             {isOfficial && <BadgeCheck className="h-4 w-4 text-primary" />}
                             <p className="text-sm text-muted-foreground">@{authorUsername}</p>
                         </div>
