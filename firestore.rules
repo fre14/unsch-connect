@@ -42,22 +42,25 @@ service cloud.firestore {
      * @description Allow authenticated users to list all posts and read individual ones.
      * Writes are restricted:
      * - Create: Only by the author.
-     * - Update: Author can edit content. Any user can update 'likedBy' or 'repostedBy'.
+     * - Update: Author can edit everything. Any user can interact (like/repost).
      * - Delete: Only by the author.
      */
     match /posts/{postId} {
       allow get, list: if true; // Public posts
       allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
-      // Allow author to update everything.
-      // Allow any authenticated user to update ONLY the interaction fields.
+      // FINAL, CORRECTED RULE:
       allow update: if request.auth != null && (
-        // Case 1: The user is the author of the post.
+        // Case 1: The user is the author of the post and can update anything.
         resource.data.authorId == request.auth.uid ||
-        // Case 2: Any authenticated user can like, unlike, repost, or un-repost.
-        // This rule ensures that only the specified fields can be modified.
-        request.resource.data.keys().removeAll(['likedBy', 'repostedBy', 'updatedAt']).size() == resource.data.keys().removeAll(['likedBy', 'repostedBy', 'updatedAt']).size() &&
-        request.resource.data.content == resource.data.content &&
-        request.resource.data.authorId == resource.data.authorId
+        // Case 2: Any authenticated user can interact (like/repost) but cannot change core content.
+        // This rule verifies that immutable fields are not being changed.
+        (
+          request.resource.data.authorId == resource.data.authorId &&
+          request.resource.data.content == resource.data.content &&
+          request.resource.data.postType == resource.data.postType &&
+          request.resource.data.createdAt == resource.data.createdAt
+          // Implicitly allows 'likedBy', 'repostedBy', and 'updatedAt' to be changed.
+        )
       );
       allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
     }
