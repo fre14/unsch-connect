@@ -1,0 +1,120 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/userProfiles/$(userId)).data.role;
+    }
+
+    function isAdmin() {
+      return request.auth != null && getUserRole(request.auth.uid) == 'admin';
+    }
+
+    function isOfficial() {
+      return request.auth != null && (getUserRole(request.auth.uid) == 'official' || isAdmin());
+    }
+
+    // Admins have universal access
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    /**
+     * @description Secure user profile data.
+     * Users can create their own profile.
+     * Only owners can read or update their own profile, with an exception for the 'role' field.
+     * The 'role' field can only be changed by an admin.
+     * Any authenticated user can update another user's followers list (and the other user can update the current user's following list).
+     */
+    match /userProfiles/{userProfileId} {
+      allow get: if true; // Public profiles
+      allow list: if false; // User listing is disabled for privacy.
+      allow create: if isOwner(userProfileId);
+      allow update: if request.auth != null && (
+        // Case 1: Owner can update their own profile, but not their role.
+        (isOwner(userProfileId) && !('role' in request.resource.data && request.resource.data.role != resource.data.role)) ||
+        // Case 2: Any authenticated user can follow/unfollow, which updates the 'followers' or 'following' array.
+        (request.resource.data.keys().hasAny(['followers', 'following']))
+      );
+    }
+
+    /**
+     * @description Allow authenticated users to list all posts and read individual ones.
+     * Writes are restricted:
+     * - Create: Only by the author.
+     * - Update: Author can edit everything. Any user can interact (like/repost).
+     * - Delete: Only by the author.
+     */
+    match /posts/{postId} {
+      allow get, list: if true; // Public posts
+      allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
+      allow update: if request.auth != null && (
+        // Case 1: The user is the author of the post and can update anything.
+        resource.data.authorId == request.auth.uid ||
+        // Case 2: Any authenticated user can interact (like/repost) but cannot change core content.
+        // This rule verifies that immutable fields are not being changed.
+        (
+          request.resource.data.authorId == resource.data.authorId &&
+          request.resource.data.content == resource.data.content &&
+          request.resource.data.postType == resource.data.postType &&
+          request.resource.data.createdAt == resource.data.createdAt
+        )
+      );
+      allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+    }
+
+     /**
+      * @description Secure comments, allowing anyone to read, but only the author to write.
+      */
+    match /posts/{postId}/comments/{commentId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+    }
+
+    /**
+     * @description Allows public read access to announcements, but creation is restricted.
+     * Only 'official' or 'admin' users can create announcements.
+     * Updates and deletes are disallowed for data integrity.
+     */
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow create: if isOfficial();
+      allow update, delete: if false; // Announcements are immutable by default
+    }
+
+    /**
+     * @description Secure academic schedule data, allowing only the owner to read and write.
+     */
+    match /userProfiles/{userProfileId}/academicSchedules/{academicScheduleId} {
+      allow read, write: if isOwner(userProfileId);
+    }
+
+    /**
+     * @description Secure password reset tokens.
+     */
+    match /passwordResetTokens/{tokenId} {
+        allow read, create: if request.auth != null;
+        allow update, delete: if false;
+        allow list: if false;
+    }
+
+    /**
+     * @description Secure reports. Only authenticated users can create them.
+     * Reading and listing is restricted to admins.
+     */
+    match /reports/{reportId} {
+      allow get, list: if isAdmin();
+      allow create: if request.auth != null && request.resource.data.reporterId == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}
+
+    

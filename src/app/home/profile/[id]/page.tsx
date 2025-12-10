@@ -6,49 +6,88 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Mail, Link as LinkIcon, CalendarDays, XCircle, LoaderCircle } from "lucide-react";
+import { Mail, Link as LinkIcon, XCircle, LoaderCircle } from "lucide-react";
 import Link from 'next/link';
-import { useUser } from '@/context/user-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useDoc, useMemoFirebase, useFirestore, useFirebase } from '@/firebase';
-import { collection, query, where, orderBy, DocumentData, doc } from 'firebase/firestore';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import React, { useMemo, useEffect } from 'react';
+import { collection, query, where, DocumentData, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import React, { useMemo, useEffect, useState } from 'react';
 import { getImageUrl } from '@/lib/placeholder-images';
 import { useRouter } from 'next/navigation';
 
 export default function OtherUserProfilePage({ params }: { params: { id: string } }) {
-    const { user } = useFirebase();
+    const { user, isUserLoading: isAuthLoading } = useFirebase();
     const router = useRouter();
     const firestore = useFirestore();
-    const [isMyProfile, setIsMyProfile] = React.useState(false);
 
+    const [isMyProfile, setIsMyProfile] = useState(false);
+    
+    // Redirect if the user is trying to view their own profile on this public page.
     useEffect(() => {
-        // This check should only run once, and if the condition is met, it will navigate away.
         if (user && params.id === user.uid) {
             router.replace('/home/profile');
-        } else if (user) {
+        } else {
             setIsMyProfile(false);
         }
     }, [user, params.id, router]);
 
-    // Show a loader while we determine if we need to redirect.
-    // This prevents the page from rendering and making data fetches if a redirect is imminent.
-    if (!user || (user && params.id === user.uid)) {
-         return (
-             <div className="max-w-3xl mx-auto flex justify-center items-center h-full pt-20">
-                <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
-            </div>
-        );
-    }
-    
+    // Data fetching for the profile being viewed
     const userProfileRef = useMemoFirebase(() => {
         if (!firestore || !params.id) return null;
         return doc(firestore, 'userProfiles', params.id);
     }, [firestore, params.id]);
     
-    const { data: userProfile, isLoading: isUserLoading } = useDoc<DocumentData>(userProfileRef);
+    const { data: userProfile, isLoading: isProfileLoading } = useDoc<DocumentData>(userProfileRef);
+    
+    // State for follow logic
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [followersCount, setFollowersCount] = useState(0);
+    const [isFollowLoading, setIsFollowLoading] = useState(false);
+
+    // Effect to set initial follow state
+    useEffect(() => {
+        if (userProfile && user) {
+            setIsFollowing(userProfile.followers?.includes(user.uid) || false);
+        }
+        setFollowersCount(userProfile?.followers?.length || 0);
+    }, [userProfile, user]);
+
+    const handleFollowToggle = async () => {
+        if (!user || !firestore || !userProfile) {
+            // Consider showing a toast message here
+            return;
+        }
+
+        setIsFollowLoading(true);
+
+        const currentUserRef = doc(firestore, "userProfiles", user.uid);
+        const viewedUserRef = doc(firestore, "userProfiles", userProfile.id);
+
+        try {
+            // Optimistic UI updates
+            const newIsFollowing = !isFollowing;
+            setIsFollowing(newIsFollowing);
+            setFollowersCount(prev => newIsFollowing ? prev + 1 : prev - 1);
+            
+            // Firestore updates
+            await updateDoc(currentUserRef, {
+                following: newIsFollowing ? arrayUnion(userProfile.id) : arrayRemove(userProfile.id)
+            });
+            await updateDoc(viewedUserRef, {
+                followers: newIsFollowing ? arrayUnion(user.uid) : arrayRemove(user.uid)
+            });
+            
+        } catch (error) {
+            console.error("Error toggling follow:", error);
+            // Revert optimistic updates on error
+            setIsFollowing(isFollowing);
+            setFollowersCount(followersCount);
+            // Consider showing a toast message for the error
+        } finally {
+            setIsFollowLoading(false);
+        }
+    };
+
 
     const allPostsQuery = useMemoFirebase(() => {
         if (!firestore || !params.id) return null;
@@ -82,34 +121,19 @@ export default function OtherUserProfilePage({ params }: { params: { id: string 
         return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
     };
     
-    const followersCount = userProfile?.followers?.length || 0;
     const followingCount = userProfile?.following?.length || 0;
     
     const avatar = userProfile?.profilePicture || getImageUrl('default-user-avatar');
     const coverImage = userProfile?.coverImage || getImageUrl('cover-default');
 
-    if (isUserLoading) {
-        return (
-             <div className="max-w-3xl mx-auto space-y-6">
-                <Card className="overflow-hidden shadow-md">
-                    <Skeleton className="w-full h-36 md:h-48" />
-                    <CardContent className="p-4 sm:p-6">
-                        <div className="flex items-end gap-4 -mt-16 sm:-mt-20">
-                            <Skeleton className="h-28 w-28 sm:h-32 sm:w-32 rounded-full border-4 border-background ring-2 ring-primary/50" />
-                        </div>
-                        <div className="mt-4 space-y-3">
-                            <Skeleton className="h-8 w-1/2" />
-                            <Skeleton className="h-4 w-1/4" />
-                            <Skeleton className="h-12 w-full" />
-                            <div className="flex gap-4">
-                                <Skeleton className="h-4 w-1/3" />
-                                <Skeleton className="h-4 w-1/3" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-             </div>
-        )
+    const isLoading = isAuthLoading || isProfileLoading;
+    
+    if (isLoading || (user && params.id === user.uid)) {
+         return (
+             <div className="max-w-3xl mx-auto flex justify-center items-center h-full pt-20">
+                <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+            </div>
+        );
     }
 
     if (!userProfile) {
@@ -137,9 +161,13 @@ export default function OtherUserProfilePage({ params }: { params: { id: string 
                             <AvatarFallback>{userProfile?.firstName?.charAt(0) || userProfile?.email?.charAt(0) || 'U'}</AvatarFallback>
                         </Avatar>
                         <div className="ml-auto flex gap-2 pb-2">
-                             {/* TODO: Add Follow/Unfollow button logic here */}
-                             <Button variant="outline" className="gap-2 rounded-full">
-                                Seguir
+                             <Button 
+                                variant={isFollowing ? 'default' : 'outline'} 
+                                className="gap-2 rounded-full w-28"
+                                onClick={handleFollowToggle}
+                                disabled={isFollowLoading}
+                            >
+                                {isFollowLoading ? <LoaderCircle className="animate-spin" /> : (isFollowing ? 'Siguiendo' : 'Seguir')}
                             </Button>
                         </div>
                     </div>
@@ -164,7 +192,6 @@ export default function OtherUserProfilePage({ params }: { params: { id: string 
                                     </a>
                                 </div>
                             )}
-                             {/* We can't reliably get join date for other users without security rule changes, so it's omitted here */}
                         </div>
                         <div className="mt-4 flex gap-6 text-sm">
                             <Link href="#" className="hover:underline"><span className="font-bold text-foreground">{followersCount}</span> <span className="text-muted-foreground">Seguidores</span></Link>
@@ -241,3 +268,5 @@ export default function OtherUserProfilePage({ params }: { params: { id: string 
         </div>
     )
 }
+
+    

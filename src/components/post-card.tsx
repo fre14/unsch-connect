@@ -59,7 +59,7 @@ function Comment({ comment }: { comment: DocumentData }) {
             <div className="flex-1">
                 <div className="bg-muted/50 rounded-lg px-3 py-2">
                     <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm">{`${authorProfile?.firstName || ''} ${authorProfile?.lastName || ''}`.trim()}</span>
+                        <Link href={`/home/profile/${comment.authorId}`} className="font-semibold text-sm hover:underline">{`${authorProfile?.firstName || ''} ${authorProfile?.lastName || ''}`.trim()}</Link>
                         <span className="text-xs text-muted-foreground">{formatPostTime(comment.createdAt)}</span>
                     </div>
                     <p className="text-sm">{comment.content}</p>
@@ -140,6 +140,64 @@ function CommentsDialog({ postId }: { postId: string }) {
     );
 }
 
+function ReportDialog({ postId, onReportSuccess }: { postId: string, onReportSuccess: () => void }) {
+    const [reason, setReason] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const firestore = useFirestore();
+    const { user } = useFirebase();
+
+    const handleReportSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!reason.trim() || !firestore || !user) return;
+
+        setIsSubmitting(true);
+        const reportCollectionRef = collection(firestore, 'reports');
+        const newReport = {
+            reporterId: user.uid,
+            reportedPostId: postId,
+            reason: reason,
+            createdAt: serverTimestamp(),
+        };
+
+        try {
+            await addDoc(reportCollectionRef, newReport);
+            toast({ title: 'Reporte Enviado', description: 'Gracias por ayudarnos a mantener la comunidad segura. La publicación ha sido ocultada.' });
+            onReportSuccess();
+        } catch (error) {
+            console.error("Error submitting report:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'No se pudo enviar el reporte.' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Reportar Publicación</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleReportSubmit} className="space-y-4">
+                <Textarea
+                    placeholder="Describe por qué estás reportando esta publicación..."
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    disabled={isSubmitting}
+                    rows={4}
+                />
+                <div className="flex justify-end gap-2">
+                     <DialogClose asChild>
+                        <Button type="button" variant="outline">Cancelar</Button>
+                     </DialogClose>
+                    <Button type="submit" disabled={!reason.trim() || isSubmitting}>
+                        {isSubmitting ? 'Enviando...' : 'Enviar Reporte'}
+                    </Button>
+                </div>
+            </form>
+        </DialogContent>
+    );
+}
+
+
 export type PostProps = {
   id: string;
   authorId: string;
@@ -160,9 +218,26 @@ export function PostCard(props: PostProps) {
     const { user } = useFirebase();
     const firestore = useFirestore();
 
-    const [hasLiked, setHasLiked] = useState(user && likedBy.includes(user.uid));
+    // State for optimistic UI updates
+    const [hasLiked, setHasLiked] = useState(user ? likedBy.includes(user.uid) : false);
     const [likeCount, setLikeCount] = useState(likedBy.length);
     const [repostCount, setRepostCount] = useState(repostedBy.length);
+    const [hasReposted, setHasReposted] = useState(user ? repostedBy.includes(user.uid) : false);
+
+    // State for local hide on report
+    const [isHidden, setIsHidden] = useState(false);
+
+    useEffect(() => {
+        try {
+            const reportedPosts = JSON.parse(localStorage.getItem('reportedPosts') || '[]');
+            if (reportedPosts.includes(id)) {
+                setIsHidden(true);
+            }
+        } catch (e) {
+            console.error("Failed to read from local storage", e);
+        }
+        
+    }, [id]);
 
 
     const commentsQuery = useMemoFirebase(() => {
@@ -173,7 +248,6 @@ export function PostCard(props: PostProps) {
     const { data: comments } = useCollection(commentsQuery);
     const commentCount = comments?.length || 0;
 
-    // Determine which author ID to use (original for reposts, own for original posts)
     const displayAuthorId = originalAuthorId || authorId;
     const { authorProfile, isLoading: isAuthorLoading } = useAuthorProfile(displayAuthorId);
 
@@ -216,7 +290,6 @@ export function PostCard(props: PostProps) {
              return;
         }
 
-        // Optimistic UI update
         const newHasLiked = !hasLiked;
         setHasLiked(newHasLiked);
         setLikeCount(prev => newHasLiked ? prev + 1 : prev - 1);
@@ -230,7 +303,6 @@ export function PostCard(props: PostProps) {
         try {
             await updateDoc(postDocRef, updateData)
         } catch (error) {
-             // Revert optimistic update on error
             setHasLiked(!newHasLiked);
             setLikeCount(prev => !newHasLiked ? prev + 1 : prev - 1);
 
@@ -240,7 +312,6 @@ export function PostCard(props: PostProps) {
                 requestResourceData: updateData,
             });
             errorEmitter.emit('permission-error', permissionError);
-            toast({ variant: 'destructive', title: 'Error', description: 'No se pudo procesar tu Me Gusta.' });
         }
     }
 
@@ -249,45 +320,70 @@ export function PostCard(props: PostProps) {
             toast({ variant: 'destructive', title: 'Error', description: 'Debes iniciar sesión para repostear.' });
             return;
         }
-        const postDocRef = doc(firestore, 'posts', id);
         
         if (originalPostId) {
              toast({ title: 'Acción no permitida', description: 'No puedes repostear un repost.' });
              return;
         }
 
-        setRepostCount(prev => prev + 1);
+        const newHasReposted = !hasReposted;
+        setHasReposted(newHasReposted);
+        setRepostCount(prev => newHasReposted ? prev + 1 : prev - 1);
 
-        const newPost = {
-            authorId: user.uid,
-            content: content, 
-            postType: 'repost',
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            originalPostId: id,
-            originalAuthorId: authorId,
-            likedBy: [],
-            repostedBy: [],
-        };
+        const postDocRef = doc(firestore, 'posts', id);
         
         try {
-            await addDoc(collection(firestore, 'posts'), newPost);
-            await updateDoc(postDocRef, { repostedBy: arrayUnion(user.uid), updatedAt: serverTimestamp() });
-            toast({ title: '¡Reposteado!', description: 'Has compartido esta publicación.' });
+            if (newHasReposted) {
+                const newPost = {
+                    authorId: user.uid,
+                    content: content, 
+                    postType: 'repost',
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    originalPostId: id,
+                    originalAuthorId: authorId,
+                    likedBy: [],
+                    repostedBy: [],
+                };
+                await addDoc(collection(firestore, 'posts'), newPost);
+                await updateDoc(postDocRef, { repostedBy: arrayUnion(user.uid), updatedAt: serverTimestamp() });
+                toast({ title: '¡Reposteado!', description: 'Has compartido esta publicación.' });
+            } else {
+                // This case is more complex: would need to find and delete the user's repost document.
+                // For simplicity, we'll prevent un-reposting this way.
+                // To implement un-repost, one would query for the repost and delete it.
+                toast({ title: 'Acción no soportada', description: 'No se puede deshacer un repost desde aquí.' });
+                 setHasReposted(!newHasReposted);
+                 setRepostCount(prev => !newHasReposted ? prev + 1 : prev - 1);
+            }
         } catch (error) {
-             setRepostCount(prev => prev - 1);
-             const updateData = { repostedBy: arrayUnion(user.uid), updatedAt: serverTimestamp() };
+             setHasReposted(!newHasReposted);
+             setRepostCount(prev => !newHasReposted ? prev + 1 : prev - 1);
              const permissionError = new FirestorePermissionError({
                 path: postDocRef.path,
                 operation: 'update',
-                requestResourceData: updateData,
              });
              errorEmitter.emit('permission-error', permissionError);
              toast({ variant: 'destructive', title: 'Error', description: 'No se pudo repostear.' });
         }
     };
+    
+    const handleReportSuccess = () => {
+        try {
+            const reportedPosts = JSON.parse(localStorage.getItem('reportedPosts') || '[]');
+            reportedPosts.push(id);
+            localStorage.setItem('reportedPosts', JSON.stringify(reportedPosts));
+            setIsHidden(true);
+        } catch (e) {
+            console.error("Failed to write to local storage", e);
+        }
+    };
 
     const isLoading = isAuthorLoading || isOriginalPostLoading;
+
+    if (isHidden) {
+        return null;
+    }
 
     if (isLoading) {
         return (
@@ -312,10 +408,12 @@ export function PostCard(props: PostProps) {
                 </div>
             )}
            <div className="p-4 flex gap-4">
-            <Avatar className="h-11 w-11">
-              <AvatarImage src={authorAvatarUrl} alt={authorName} />
-              <AvatarFallback>{authorName?.charAt(0) || 'U'}</AvatarFallback>
-            </Avatar>
+            <Link href={`/home/profile/${displayAuthorId}`} className="flex-shrink-0">
+                <Avatar className="h-11 w-11">
+                  <AvatarImage src={authorAvatarUrl} alt={authorName} />
+                  <AvatarFallback>{authorName?.charAt(0) || 'U'}</AvatarFallback>
+                </Avatar>
+            </Link>
             <div className="flex-1 space-y-2">
                 <div className='flex justify-between items-start'>
                     <div>
@@ -329,24 +427,29 @@ export function PostCard(props: PostProps) {
                             {authorSchool && !isOfficial && (<div className="flex items-center gap-1.5"> <Briefcase className="h-3.5 w-3.5" /> <span>{authorSchool}</span> </div>)}
                         </div>
                     </div>
-                    <AlertDialog>
-                      <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Más opciones"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                              <DropdownMenuItem><Flag className="mr-2 h-4 w-4" /> Reportar</DropdownMenuItem>
-                              {isAuthor && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                   <AlertDialogTrigger asChild><DropdownMenuItem className="text-destructive focus:text-destructive-foreground focus:bg-destructive/90"><Trash2 className="mr-2 h-4 w-4" /> Eliminar</DropdownMenuItem></AlertDialogTrigger>
-                                </>
-                              )}
-                          </DropdownMenuContent>
-                      </DropdownMenu>
-                      <AlertDialogContent>
-                        <AlertDialogHeader><AlertDialogTitle>¿Estás seguro?</AlertDialogTitle><AlertDialogDescription>Esta acción no se puede deshacer. Esto eliminará permanentemente tu publicación de nuestros servidores.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">{isDeleting ? 'Eliminando...' : 'Eliminar'}</AlertDialogAction></AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                     <Dialog>
+                      <AlertDialog>
+                          <DropdownMenu>
+                              <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Más opciones"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                   <DialogTrigger asChild>
+                                        <DropdownMenuItem><Flag className="mr-2 h-4 w-4" /> Reportar</DropdownMenuItem>
+                                   </DialogTrigger>
+                                  {isAuthor && (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                       <AlertDialogTrigger asChild><DropdownMenuItem className="text-destructive focus:text-destructive-foreground focus:bg-destructive/90"><Trash2 className="mr-2 h-4 w-4" /> Eliminar</DropdownMenuItem></AlertDialogTrigger>
+                                    </>
+                                  )}
+                              </DropdownMenuContent>
+                          </DropdownMenu>
+                          <AlertDialogContent>
+                            <AlertDialogHeader><AlertDialogTitle>¿Estás seguro?</AlertDialogTitle><AlertDialogDescription>Esta acción no se puede deshacer. Esto eliminará permanentemente tu publicación de nuestros servidores.</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">{isDeleting ? 'Eliminando...' : 'Eliminar'}</AlertDialogAction></AlertDialogFooter>
+                          </AlertDialogContent>
+                      </AlertDialog>
+                      <ReportDialog postId={id} onReportSuccess={handleReportSuccess} />
+                    </Dialog>
                 </div>
                 <p className="whitespace-pre-wrap text-base">{content}</p>
 
@@ -380,8 +483,8 @@ export function PostCard(props: PostProps) {
                         </DialogTrigger>
                        <CommentsDialog postId={id} />
                     </Dialog>
-                    <Button variant="ghost" onClick={handleRepost} className="flex items-center gap-2 text-muted-foreground hover:text-green-500" aria-label={`${repostCount} reposts`}>
-                        <Repeat className="h-5 w-5" />
+                    <Button variant="ghost" onClick={handleRepost} className="flex items-center gap-2 text-muted-foreground hover:text-green-500" aria-label={`${repostCount} reposts`} disabled={hasReposted}>
+                        <Repeat className={`h-5 w-5 ${hasReposted ? 'text-green-500' : ''}`} />
                         <span className="text-sm">{repostCount}</span>
                     </Button>
                     <Button variant="ghost" onClick={handleLike} className="flex items-center gap-2 text-muted-foreground hover:text-red-500" aria-label={`${likeCount} me gusta`}>
@@ -394,3 +497,5 @@ export function PostCard(props: PostProps) {
         </Card>
     );
 }
+
+    
