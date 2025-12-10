@@ -29,12 +29,11 @@ service cloud.firestore {
      * @description Secure user profile data.
      * Users can create their own profile.
      * Only owners can read or update their own profile, with an exception for the 'role' field.
-     * The 'role' field can only be changed by an admin.
      * Any authenticated user can update another user's followers list (and the other user can update the current user's following list).
      */
     match /userProfiles/{userProfileId} {
       allow get: if true; // Public profiles
-      allow list: if false; // User listing is disabled for privacy.
+      allow list: if request.auth != null; // User listing is enabled for search.
       allow create: if isOwner(userProfileId);
       allow update: if request.auth != null && (
         // Case 1: Owner can update their own profile, but not their role.
@@ -116,5 +115,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
