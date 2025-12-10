@@ -214,16 +214,19 @@ export function PostCard(props: PostProps) {
              return;
         }
         const postDocRef = doc(firestore, 'posts', id);
-        try {
-            if (hasLiked) {
-                await updateDoc(postDocRef, { likedBy: arrayRemove(user.uid) });
-            } else {
-                await updateDoc(postDocRef, { likedBy: arrayUnion(user.uid) });
-            }
-        } catch (error) {
-             console.error("Error liking post:", error);
-             toast({ variant: 'destructive', title: 'Error', description: 'No se pudo procesar tu Me Gusta.' });
-        }
+        const updateData = {
+            likedBy: hasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid),
+            updatedAt: serverTimestamp()
+        };
+        updateDoc(postDocRef, updateData).catch((error) => {
+            const permissionError = new FirestorePermissionError({
+                path: postDocRef.path,
+                operation: 'update',
+                requestResourceData: updateData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            toast({ variant: 'destructive', title: 'Error', description: 'No se pudo procesar tu Me Gusta.' });
+        });
     }
 
     const handleRepost = async () => {
@@ -245,6 +248,7 @@ export function PostCard(props: PostProps) {
             content: content, // or an empty string if you prefer
             postType: 'repost',
             createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
             originalPostId: id,
             originalAuthorId: authorId,
             likedBy: [],
@@ -253,10 +257,16 @@ export function PostCard(props: PostProps) {
         
         try {
             await addDoc(collection(firestore, 'posts'), newPost);
-            await updateDoc(postDocRef, { repostedBy: arrayUnion(user.uid) });
+            await updateDoc(postDocRef, { repostedBy: arrayUnion(user.uid), updatedAt: serverTimestamp() });
             toast({ title: '¡Reposteado!', description: 'Has compartido esta publicación.' });
         } catch (error) {
-             console.error("Error reposting:", error);
+             const updateData = { repostedBy: arrayUnion(user.uid), updatedAt: serverTimestamp() };
+             const permissionError = new FirestorePermissionError({
+                path: postDocRef.path,
+                operation: 'update',
+                requestResourceData: updateData,
+             });
+             errorEmitter.emit('permission-error', permissionError);
              toast({ variant: 'destructive', title: 'Error', description: 'No se pudo repostear.' });
         }
     };
@@ -373,3 +383,5 @@ export function PostCard(props: PostProps) {
         </Card>
     );
 }
+
+    
