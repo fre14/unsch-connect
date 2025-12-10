@@ -12,24 +12,21 @@ import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useDoc, useMemoFirebase, useFirestore, useFirebase } from '@/firebase';
 import { collection, query, where, DocumentData, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import React, { useMemo, useEffect, useState, use } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { getImageUrl } from '@/lib/placeholder-images';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
-export default function OtherUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+export default function OtherUserProfilePage() {
+    const params = useParams();
+    const id = params.id as string;
     const { user, isUserLoading: isAuthLoading } = useFirebase();
     const router = useRouter();
     const firestore = useFirestore();
-
-    const [isMyProfile, setIsMyProfile] = useState(false);
     
     // Redirect if the user is trying to view their own profile on this public page.
     useEffect(() => {
         if (user && id === user.uid) {
             router.replace('/home/profile');
-        } else {
-            setIsMyProfile(false);
         }
     }, [user, id, router]);
 
