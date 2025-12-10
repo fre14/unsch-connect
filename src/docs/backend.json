@@ -136,6 +136,11 @@
           "type": "string",
           "description": "The main content of the post (text, link, etc.)."
         },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to an image attached to the post.",
+          "format": "uri"
+        },
         "postType": {
           "type": "string",
           "description": "The type of the post (e.g., 'text', 'photo', 'video', 'poll')."
@@ -259,6 +264,16 @@
         "category": {
           "type": "string",
           "description": "Category of the announcement."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Optional start date and time for the event.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "Optional end date and time for the event.",
+          "format": "date-time"
         }
       },
       "required": [

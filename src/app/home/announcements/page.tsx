@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { XCircle, LoaderCircle, PlusCircle } from 'lucide-react';
+import { XCircle, LoaderCircle, PlusCircle, CalendarIcon } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useCollection, useMemoFirebase, useFirestore, useFirebase } from '@/firebase';
 import { useUser } from '@/context/user-context';
@@ -21,11 +21,23 @@ import { toast } from '@/hooks/use-toast';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { formatPostTime } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const announcementSchema = z.object({
   title: z.string().min(1, 'El título es requerido.'),
   content: z.string().min(1, 'El contenido es requerido.'),
   category: z.enum(['rectorado', 'facultad', 'admision'], { required_error: 'La categoría es requerida.' }),
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
+}).refine(data => {
+    return !data.startDate || !data.endDate || data.endDate >= data.startDate;
+}, {
+    message: "La fecha de fin debe ser posterior a la fecha de inicio.",
+    path: ["endDate"],
 });
 
 type AnnouncementFormValues = z.infer<typeof announcementSchema>;
@@ -55,6 +67,8 @@ function CreateAnnouncementForm({ setDialogOpen }: { setDialogOpen: (open: boole
             faculty: 'General', 
             school: 'General',
             course: 'General',
+            ...(data.startDate && { startDate: data.startDate }),
+            ...(data.endDate && { endDate: data.endDate }),
         };
 
         addDoc(announcementCollectionRef, newAnnouncement)
@@ -125,6 +139,54 @@ function CreateAnnouncementForm({ setDialogOpen }: { setDialogOpen: (open: boole
                         </FormItem>
                     )}
                 />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="startDate"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel>Fecha de Inicio (Opcional)</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                                {field.value ? format(field.value, "PPP", { locale: es }) : <span>Elige una fecha</span>}
+                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus locale={es}/>
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="endDate"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel>Fecha de Fin (Opcional)</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                                {field.value ? format(field.value, "PPP", { locale: es }) : <span>Elige una fecha</span>}
+                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus locale={es}/>
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 <Button type="submit" className="w-full !mt-6" disabled={form.formState.isSubmitting}>
                      {form.formState.isSubmitting ? 'Publicando...' : 'Publicar Anuncio'}
                 </Button>
@@ -223,6 +285,8 @@ export default function AnnouncementsPage() {
                             time={formatPostTime(post.createdAt)}
                             content={`${post.title ? `**${post.title}**\n\n` : ''}${post.content}`}
                             isOfficial={true}
+                            startDate={post.startDate}
+                            endDate={post.endDate}
                         />
                     ))
                 ) : (
@@ -241,6 +305,8 @@ export default function AnnouncementsPage() {
     );
 }
     
+    
+
     
 
     

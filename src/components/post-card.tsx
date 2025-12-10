@@ -8,10 +8,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { MessageCircle, Heart, Repeat, MoreHorizontal, Flag, BadgeCheck, Briefcase, Trash2, LoaderCircle, Undo } from 'lucide-react';
+import { MessageCircle, Heart, Repeat, MoreHorizontal, Flag, BadgeCheck, Briefcase, Trash2, LoaderCircle, Undo, CalendarPlus, CalendarClock } from 'lucide-react';
 import { getImageUrl } from '@/lib/placeholder-images';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc, DocumentData, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { doc, DocumentData, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, collection, serverTimestamp, query, orderBy, Timestamp } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase, useFirebase, useCollection } from '@/firebase';
 import { toast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Textarea } from './ui/textarea';
 import { formatPostTime } from '@/lib/utils';
 import Link from 'next/link';
+import { format, es } from 'date-fns';
 
 // Hook interno para obtener los datos del autor
 function useAuthorProfile(authorId: string | undefined) {
@@ -211,10 +212,12 @@ export type PostProps = {
   imageAlt?: string;
   isOfficial?: boolean;
   authorOverride?: { name: string };
+  startDate?: Timestamp;
+  endDate?: Timestamp;
 };
 
 export function PostCard(props: PostProps) {
-    const { id, authorId, time, content, imageUrl, imageAlt, isOfficial = false, authorOverride, likedBy = [], repostedBy = [], originalPostId, originalAuthorId } = props;
+    const { id, authorId, time, content, imageUrl, imageAlt, isOfficial = false, authorOverride, likedBy = [], repostedBy = [], originalPostId, originalAuthorId, startDate, endDate } = props;
     const { user } = useFirebase();
     const firestore = useFirestore();
 
@@ -361,6 +364,35 @@ export function PostCard(props: PostProps) {
         }
     };
     
+    const handleAddToSchedule = async () => {
+        if (!firestore || !user || !startDate || !endDate) {
+            toast({ variant: 'destructive', title: 'Error', description: 'No se puede agendar este evento.' });
+            return;
+        }
+
+        const scheduleCollectionRef = collection(firestore, "userProfiles", user.uid, "academicSchedules");
+        const title = content.split('\n')[0].replace(/\*\*/g, ''); // Extract title from content
+        
+        const newScheduleItem = {
+            courseName: title,
+            date: startDate.toDate(), 
+            startTime: format(startDate.toDate(), 'HH:mm'),
+            endTime: format(endDate.toDate(), 'HH:mm'),
+            type: 'event',
+            description: content,
+            userProfileId: user.uid,
+            dayOfWeek: format(startDate.toDate(), 'eeee', { locale: es }).toLowerCase(),
+        };
+
+        try {
+            await addDoc(scheduleCollectionRef, newScheduleItem);
+            toast({ title: "¡Agendado!", description: "El evento se ha añadido a tu horario." });
+        } catch (error) {
+            console.error("Error adding to schedule:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'No se pudo agendar el evento.' });
+        }
+    };
+    
     const handleReportSuccess = () => {
         try {
             const reportedPosts = JSON.parse(localStorage.getItem('reportedPosts') || '[]');
@@ -466,6 +498,14 @@ export function PostCard(props: PostProps) {
                 </div>
                 <p className="whitespace-pre-wrap text-base">{content}</p>
 
+                {startDate && endDate && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground border-t border-dashed pt-2 mt-2">
+                        <CalendarClock className="h-4 w-4 text-primary" />
+                        <span>{format(startDate.toDate(), "d 'de' MMM, yyyy", { locale: es })} - {format(endDate.toDate(), "d 'de' MMM, yyyy", { locale: es })}</span>
+                    </div>
+                )}
+
+
                 {originalPostId && originalPostData && (
                     <div className="border rounded-lg p-3 mt-2">
                          <PostCard 
@@ -503,9 +543,16 @@ export function PostCard(props: PostProps) {
                         <Heart className={`h-5 w-5 ${hasLiked ? 'fill-current text-red-500' : ''}`} />
                         <span className="text-sm">{likeCount}</span>
                     </Button>
+                     {isOfficial && startDate && (
+                        <Button variant="ghost" onClick={handleAddToSchedule} className="flex items-center gap-2 text-muted-foreground hover:text-accent-foreground" aria-label="Agendar">
+                            <CalendarPlus className="h-5 w-5" />
+                        </Button>
+                    )}
                 </div>
             </div>
           </div>
         </Card>
     );
 }
+
+    
