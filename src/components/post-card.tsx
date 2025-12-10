@@ -160,6 +160,11 @@ export function PostCard(props: PostProps) {
     const { user } = useFirebase();
     const firestore = useFirestore();
 
+    const [hasLiked, setHasLiked] = useState(user && likedBy.includes(user.uid));
+    const [likeCount, setLikeCount] = useState(likedBy.length);
+    const [repostCount, setRepostCount] = useState(repostedBy.length);
+
+
     const commentsQuery = useMemoFirebase(() => {
         if (!firestore || !id) return null;
         return query(collection(firestore, 'posts', id, 'comments'));
@@ -174,10 +179,7 @@ export function PostCard(props: PostProps) {
 
     const isAuthor = user?.uid === authorId;
     const [isDeleting, setIsDeleting] = useState(false);
-    const hasLiked = useMemo(() => user && likedBy.includes(user.uid), [likedBy, user]);
-    const likeCount = likedBy.length;
-    const repostCount = repostedBy.length;
-
+    
     const originalPostQuery = useMemoFirebase(() => {
         if (!firestore || !originalPostId) return null;
         return doc(firestore, 'posts', originalPostId);
@@ -213,12 +215,25 @@ export function PostCard(props: PostProps) {
              toast({ variant: 'destructive', title: 'Error', description: 'Debes iniciar sesión para dar me gusta.' });
              return;
         }
+
+        // Optimistic UI update
+        const newHasLiked = !hasLiked;
+        setHasLiked(newHasLiked);
+        setLikeCount(prev => newHasLiked ? prev + 1 : prev - 1);
+
         const postDocRef = doc(firestore, 'posts', id);
         const updateData = {
-            likedBy: hasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid),
+            likedBy: newHasLiked ? arrayUnion(user.uid) : arrayRemove(user.uid),
             updatedAt: serverTimestamp()
         };
-        updateDoc(postDocRef, updateData).catch((error) => {
+
+        try {
+            await updateDoc(postDocRef, updateData)
+        } catch (error) {
+             // Revert optimistic update on error
+            setHasLiked(!newHasLiked);
+            setLikeCount(prev => !newHasLiked ? prev + 1 : prev - 1);
+
             const permissionError = new FirestorePermissionError({
                 path: postDocRef.path,
                 operation: 'update',
@@ -226,7 +241,7 @@ export function PostCard(props: PostProps) {
             });
             errorEmitter.emit('permission-error', permissionError);
             toast({ variant: 'destructive', title: 'Error', description: 'No se pudo procesar tu Me Gusta.' });
-        });
+        }
     }
 
     const handleRepost = async () => {
@@ -236,16 +251,16 @@ export function PostCard(props: PostProps) {
         }
         const postDocRef = doc(firestore, 'posts', id);
         
-        // Prevent reposting own reposts
         if (originalPostId) {
              toast({ title: 'Acción no permitida', description: 'No puedes repostear un repost.' });
              return;
         }
 
-        // Create a new post that is a repost
+        setRepostCount(prev => prev + 1);
+
         const newPost = {
             authorId: user.uid,
-            content: content, // or an empty string if you prefer
+            content: content, 
             postType: 'repost',
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
@@ -260,6 +275,7 @@ export function PostCard(props: PostProps) {
             await updateDoc(postDocRef, { repostedBy: arrayUnion(user.uid), updatedAt: serverTimestamp() });
             toast({ title: '¡Reposteado!', description: 'Has compartido esta publicación.' });
         } catch (error) {
+             setRepostCount(prev => prev - 1);
              const updateData = { repostedBy: arrayUnion(user.uid), updatedAt: serverTimestamp() };
              const permissionError = new FirestorePermissionError({
                 path: postDocRef.path,
@@ -335,27 +351,22 @@ export function PostCard(props: PostProps) {
                 <p className="whitespace-pre-wrap text-base">{content}</p>
 
                 {/* Render original post content if this is a repost */}
-                {originalPostId && (
+                {originalPostId && originalPostData && (
                     <div className="border rounded-lg p-3 mt-2">
-                        {isOriginalPostLoading ? (
-                             <div className="flex gap-4">
-                                <Skeleton className="h-10 w-10 rounded-full" />
-                                <div className="flex-1 space-y-2">
-                                    <Skeleton className="h-4 w-2/3" />
-                                    <Skeleton className="h-8 w-full" />
-                                </div>
-                            </div>
-                        ): originalPostData ? (
-                            <PostCard 
-                                {...originalPostData as any}
-                                id={originalPostData.id}
-                                time={formatPostTime(originalPostData.createdAt)}
-                            />
-                        ) : (
-                            <p className='text-sm text-muted-foreground'>Esta publicación ya no está disponible.</p>
-                        )}
+                         <PostCard 
+                            {...originalPostData as any}
+                            id={originalPostData.id}
+                            time={formatPostTime(originalPostData.createdAt)}
+                            likedBy={originalPostData.likedBy || []}
+                            repostedBy={originalPostData.repostedBy || []}
+                        />
                     </div>
                 )}
+                 {originalPostId && !originalPostData && !isOriginalPostLoading && (
+                    <div className="border rounded-lg p-3 mt-2">
+                        <p className='text-sm text-muted-foreground'>Esta publicación ya no está disponible.</p>
+                    </div>
+                 )}
 
 
                 {postImageUrl && imageAlt && !originalPostId && (<div className="relative aspect-video w-full overflow-hidden rounded-lg border"><Image src={postImageUrl} alt={imageAlt} fill className="object-cover" /></div>)}
@@ -383,5 +394,3 @@ export function PostCard(props: PostProps) {
         </Card>
     );
 }
-
-    
