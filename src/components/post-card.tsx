@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { MessageCircle, Heart, Repeat, MoreHorizontal, Flag, BadgeCheck, Briefcase, Trash2, LoaderCircle } from 'lucide-react';
+import { MessageCircle, Heart, Repeat, MoreHorizontal, Flag, BadgeCheck, Briefcase, Trash2, LoaderCircle, Undo } from 'lucide-react';
 import { getImageUrl } from '@/lib/placeholder-images';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { doc, DocumentData, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
@@ -218,14 +218,10 @@ export function PostCard(props: PostProps) {
     const { user } = useFirebase();
     const firestore = useFirestore();
 
-    // State for optimistic UI updates
     const [hasLiked, setHasLiked] = useState(user ? likedBy.includes(user.uid) : false);
     const [likeCount, setLikeCount] = useState(likedBy.length);
     const [hasReposted, setHasReposted] = useState(user ? repostedBy.includes(user.uid) : false);
     const [repostCount, setRepostCount] = useState(repostedBy.length);
-
-
-    // State for local hide on report
     const [isHidden, setIsHidden] = useState(false);
 
     useEffect(() => {
@@ -237,9 +233,7 @@ export function PostCard(props: PostProps) {
         } catch (e) {
             console.error("Failed to read from local storage", e);
         }
-        
     }, [id]);
-
 
     const commentsQuery = useMemoFirebase(() => {
         if (!firestore || !id) return null;
@@ -351,9 +345,6 @@ export function PostCard(props: PostProps) {
                 await updateDoc(postDocRef, { repostedBy: arrayUnion(user.uid), updatedAt: serverTimestamp() });
                 toast({ title: '¡Reposteado!', description: 'Has compartido esta publicación.' });
             } else {
-                // This case is more complex: would need to find and delete the user's repost document.
-                // For simplicity, we'll prevent un-reposting this way.
-                // To implement un-repost, one would query for the repost and delete it.
                 toast({ title: 'Acción no soportada', description: 'No se puede deshacer un repost desde aquí.' });
                  setHasReposted(!newHasReposted);
                  setRepostCount(prev => !newHasReposted ? prev + 1 : prev - 1);
@@ -381,10 +372,30 @@ export function PostCard(props: PostProps) {
         }
     };
 
-    const isLoading = isAuthorLoading || isOriginalPostLoading;
+    const handleUndoReport = () => {
+        try {
+            const reportedPosts: string[] = JSON.parse(localStorage.getItem('reportedPosts') || '[]');
+            const newReportedPosts = reportedPosts.filter(postId => postId !== id);
+            localStorage.setItem('reportedPosts', JSON.stringify(newReportedPosts));
+            setIsHidden(false);
+            toast({ title: 'Acción deshecha', description: 'La publicación ahora es visible de nuevo.' });
+        } catch (e) {
+            console.error("Failed to update local storage", e);
+        }
+    };
 
+    const isLoading = isAuthorLoading || isOriginalPostLoading;
+    
     if (isHidden) {
-        return null;
+        return (
+            <Card className="p-4 flex justify-between items-center bg-muted/50 border-dashed">
+                <p className="text-sm text-muted-foreground">Publicación reportada y oculta.</p>
+                <Button variant="ghost" size="sm" onClick={handleUndoReport}>
+                    <Undo className="h-4 w-4 mr-2" />
+                    Deshacer
+                </Button>
+            </Card>
+        );
     }
 
     if (isLoading) {
@@ -455,7 +466,6 @@ export function PostCard(props: PostProps) {
                 </div>
                 <p className="whitespace-pre-wrap text-base">{content}</p>
 
-                {/* Render original post content if this is a repost */}
                 {originalPostId && originalPostData && (
                     <div className="border rounded-lg p-3 mt-2">
                          <PostCard 
@@ -499,7 +509,3 @@ export function PostCard(props: PostProps) {
         </Card>
     );
 }
-
-    
-
-    
