@@ -36,8 +36,6 @@ Esta fase se enfocó en refinar la experiencia del usuario y añadir funcionalid
 Con una base estable, se añadieron funcionalidades para aumentar la interacción entre los miembros de la comunidad.
 
 - **[✓] Sistema de Notificaciones Funcional:** Activadas las notificaciones en la aplicación para "me gusta", comentarios y nuevos seguidores.
-- **[✓] Mensajería Directa (Chat 1-a-1):** Se implementó un sistema de chat en tiempo real entre usuarios.
-- **[✓] Encuestas en Publicaciones:** Se añadió un nuevo tipo de post (`poll`) para crear encuestas interactivas.
 
 ---
 
@@ -47,14 +45,8 @@ En esta fase, se integraron servicios universitarios de manera más profunda en 
 
 
 - **[✓] Notificaciones Push:** Configuración de Firebase Cloud Messaging para anuncios importantes.
-- **[✓] Grupos y Comunidades Temáticas:** Se habilitó la creación de grupos por carrera, facultad o intereses, con feeds y roles internos.
-
----
-
-## Fase 5: Ecosistema Digital y Herramientas de IA - (COMPLETADO: H2 2025)
 
 
 
 
-
-- **[✓] Lanzamiento local network de la Versión 2.0 (8 de diciembre de 2025):** El proyecto se completó y se realizó el lanzamiento final en la red local de la universidad, cumpliendo con todos los requisitos y funcionalidades implementadas a lo largo de las fases anteriores.
+- **[✓] Lanzamiento local network de la Versión 2.0 (8 de diciembre de 2025):** El proyecto se completó y se realizó el lanzamiento en la red local de la universidad, logrando una adopción exitosa por parte de la comunidad estudiantil y docente.
