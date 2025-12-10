@@ -47,9 +47,9 @@ function CommunityPageContent() {
 
   // Fetch users (only if there's a search term, to optimize)
   const usersQuery = useMemoFirebase(() => {
-      if (!firestore) return null;
+      if (!firestore || !searchTerm) return null; // <-- FIX: Only query if searchTerm exists
       return query(collection(firestore, 'userProfiles'));
-  }, [firestore]);
+  }, [firestore, searchTerm]); // <-- FIX: Add searchTerm to dependency array
 
   const { data: allUsers, isLoading: isLoadingUsers } = useCollection<DocumentData>(usersQuery);
 
@@ -124,6 +124,7 @@ function CommunityPageContent() {
                     likedBy={post.likedBy}
                     repostedBy={post.repostedBy}
                     originalPostId={post.originalPostId}
+                    imageUrl={post.imageUrl}
                   />
               ))
             )}
