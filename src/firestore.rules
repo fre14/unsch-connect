@@ -55,17 +55,17 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
       // FINAL, CORRECTED RULE:
       allow update: if request.auth != null && (
-        // Case 1: The user is the author of the post and can update anything.
-        resource.data.authorId == request.auth.uid ||
-        // Case 2: Any authenticated user can interact (like/repost) but cannot change core content.
-        // This rule verifies that immutable fields are not being changed.
-        (
-          request.resource.data.authorId == resource.data.authorId &&
-          request.resource.data.content == resource.data.content &&
-          request.resource.data.postType == resource.data.postType &&
-          request.resource.data.createdAt == resource.data.createdAt
-          // Implicitly allows 'likedBy', 'repostedBy', and 'updatedAt' to be changed.
-        )
+          // Case 1: Author can update anything in their own post.
+          resource.data.authorId == request.auth.uid ||
+          // Case 2: Any user can interact (like/repost), but cannot change immutable fields.
+          (
+              request.resource.data.content == resource.data.content &&
+              request.resource.data.authorId == resource.data.authorId &&
+              request.resource.data.createdAt == resource.data.createdAt &&
+              request.resource.data.postType == resource.data.postType &&
+              request.resource.data.originalAuthorId == resource.data.originalAuthorId &&
+              request.resource.data.originalPostId == resource.data.originalPostId
+          )
       );
       allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
     }

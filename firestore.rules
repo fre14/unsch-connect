@@ -29,13 +29,18 @@ service cloud.firestore {
      * @description Secure user profile data.
      * Users can create their own profile.
      * Only owners can read or update their own profile, with an exception for the 'role' field.
-     * The 'role' field can only be changed by an admin.
+     * Any authenticated user can update another user's followers list (and the other user can update the current user's following list).
      */
     match /userProfiles/{userProfileId} {
       allow get: if true; // Public profiles
-      allow list: if false; // User listing is disabled for privacy.
+      allow list: if request.auth != null; // User listing is enabled for search.
       allow create: if isOwner(userProfileId);
-      allow update: if isOwner(userProfileId) && request.resource.data.keys().diff(resource.data.keys()).hasOnly(['role']) == false;
+      allow update: if request.auth != null && (
+        // Case 1: Owner can update their own profile, but not their role.
+        (isOwner(userProfileId) && !('role' in request.resource.data && request.resource.data.role != resource.data.role)) ||
+        // Case 2: Any authenticated user can follow/unfollow, which updates the 'followers' or 'following' array.
+        (request.resource.data.keys().hasAny(['followers', 'following']))
+      );
     }
 
     /**
@@ -50,17 +55,17 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
       // FINAL, CORRECTED RULE:
       allow update: if request.auth != null && (
-        // Case 1: The user is the author of the post and can update anything.
-        resource.data.authorId == request.auth.uid ||
-        // Case 2: Any authenticated user can interact (like/repost) but cannot change core content.
-        // This rule verifies that immutable fields are not being changed.
-        (
-          request.resource.data.authorId == resource.data.authorId &&
-          request.resource.data.content == resource.data.content &&
-          request.resource.data.postType == resource.data.postType &&
-          request.resource.data.createdAt == resource.data.createdAt
-          // Implicitly allows 'likedBy', 'repostedBy', and 'updatedAt' to be changed.
-        )
+          // Case 1: Author can update anything in their own post.
+          resource.data.authorId == request.auth.uid ||
+          // Case 2: Any user can interact (like/repost), but cannot change immutable fields.
+          (
+              request.resource.data.content == resource.data.content &&
+              request.resource.data.authorId == resource.data.authorId &&
+              request.resource.data.createdAt == resource.data.createdAt &&
+              request.resource.data.postType == resource.data.postType &&
+              request.resource.data.originalAuthorId == resource.data.originalAuthorId &&
+              request.resource.data.originalPostId == resource.data.originalPostId
+          )
       );
       allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
     }
@@ -99,6 +104,16 @@ service cloud.firestore {
         allow read, create: if request.auth != null;
         allow update, delete: if false;
         allow list: if false;
+    }
+
+     /**
+     * @description Secure reports. Only authenticated users can create them.
+     * Reading and listing is restricted to admins.
+     */
+    match /reports/{reportId} {
+      allow get, list: if isAdmin();
+      allow create: if request.auth != null && request.resource.data.reporterId == request.auth.uid;
+      allow update, delete: if false;
     }
   }
 }
