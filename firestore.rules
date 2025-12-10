@@ -51,7 +51,7 @@ service cloud.firestore {
       // Allow any authenticated user to update ONLY the likedBy or repostedBy fields.
       allow update: if request.auth != null && 
                     (resource.data.authorId == request.auth.uid || 
-                     (request.resource.data.keys().diff(resource.data.keys()).hasOnly(['likedBy', 'repostedBy'])));
+                     (request.resource.data.keys().diff(resource.data.keys()).hasOnly(['likedBy', 'repostedBy', 'updatedAt'])));
       allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
     }
 
