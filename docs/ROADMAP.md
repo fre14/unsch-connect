@@ -6,15 +6,16 @@ El objetivo de UNSCH Connect es consolidar su posición como la plataforma digit
 
 ---
 
-## Fase 1: Producto Mínimo Viable (MVP) - (COMPLETADO - Q1 2024)
+## Fase 1: Producto Mínimo Viable (MVP) - (COMPLETADO - Q2 2024)
 
-Esta fase se centró en construir el núcleo funcional de la aplicación, estableciendo las bases para la interacción social y la comunicación oficial. Todas las siguientes funcionalidades ya han sido implementadas y probadas.
+Esta fase, consolidada durante nuestra colaboración, se centró en construir el núcleo funcional de la aplicación, estableciendo las bases para la interacción social y la comunicación oficial. Todas las siguientes funcionalidades ya han sido implementadas y probadas.
 
-- **Sistema de Registro y Autenticación por Roles** (Estudiante, Docente, Oficial, Admin).
-- **Interacción Social Básica:** Creación de posts, "Me Gusta", "Repostear" y sistema de comentarios.
-- **Perfiles de Usuario:** Visualización de información, posts y reposts del usuario.
-- **Módulo de Anuncios Oficiales:** Feed exclusivo para cuentas autorizadas.
-- **Horario Académico Personal:** Calendario interactivo privado con CRUD de eventos.
+- **Sistema de Registro y Autenticación por Roles** (Estudiante, Docente, Oficial, Admin) con validaciones específicas.
+- **Interacción Social Básica:** Creación de posts, "Me Gusta", "Repostear" y sistema de comentarios en tiempo real.
+- **Perfiles de Usuario:** Visualización de información, foto de perfil/portada, posts y reposts del usuario.
+- **Módulo de Anuncios Oficiales:** Feed exclusivo para cuentas autorizadas con creación y filtrado de anuncios.
+- **Horario Académico Personal:** Calendario interactivo privado con CRUD completo de eventos (crear, leer, editar, eliminar).
+- **Configuración de Perfil:** Edición de datos personales y subida de imágenes.
 - **Infraestructura Base:** Backend en Firebase (Firestore, Auth), Frontend en Next.js con ShadCN/UI.
 
 ---
@@ -25,7 +26,7 @@ Esta fase se enfoca en refinar la experiencia del usuario, corregir bugs y añad
 
 - **[ ] Implementar Sistema de Seguimiento (Follow/Unfollow):**
   - Lógica para seguir y dejar de seguir a otros usuarios.
-  - Actualización en tiempo real del conteo de seguidores/siguiendo.
+  - Actualización en tiempo real del conteo de seguidores/siguiendo en los perfiles.
   - **Resultado clave:** Crear un feed personalizado basado en los usuarios que se siguen.
 - **[ ] Subida de Imágenes en Publicaciones:**
   - Permitir a los usuarios adjuntar una imagen a sus publicaciones y almacenarla en Firebase Storage.
