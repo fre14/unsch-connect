@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from 'next/image';
@@ -15,26 +14,35 @@ import { useCollection, useDoc, useMemoFirebase, useFirestore, useFirebase } fro
 import { collection, query, where, orderBy, DocumentData, doc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { getImageUrl } from '@/lib/placeholder-images';
 import { useRouter } from 'next/navigation';
 
-export default function ProfilePage({ params }: { params: { id: string } }) {
+export default function OtherUserProfilePage({ params }: { params: { id: string } }) {
     const { user } = useFirebase();
     const router = useRouter();
+    const firestore = useFirestore();
+    const [isMyProfile, setIsMyProfile] = React.useState(false);
 
-    // If the visited profile ID is the same as the logged-in user's, redirect to their main profile page
-    if (user && params.id === user.uid) {
-        router.replace('/home/profile');
-        return ( // Return a loader to prevent flicker during redirect
+    useEffect(() => {
+        // This check should only run once, and if the condition is met, it will navigate away.
+        if (user && params.id === user.uid) {
+            router.replace('/home/profile');
+        } else if (user) {
+            setIsMyProfile(false);
+        }
+    }, [user, params.id, router]);
+
+    // Show a loader while we determine if we need to redirect.
+    // This prevents the page from rendering and making data fetches if a redirect is imminent.
+    if (!user || (user && params.id === user.uid)) {
+         return (
              <div className="max-w-3xl mx-auto flex justify-center items-center h-full pt-20">
                 <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
             </div>
         );
     }
     
-    const firestore = useFirestore();
-
     const userProfileRef = useMemoFirebase(() => {
         if (!firestore || !params.id) return null;
         return doc(firestore, 'userProfiles', params.id);
@@ -129,7 +137,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
                             <AvatarFallback>{userProfile?.firstName?.charAt(0) || userProfile?.email?.charAt(0) || 'U'}</AvatarFallback>
                         </Avatar>
                         <div className="ml-auto flex gap-2 pb-2">
-                             {/* Add Follow/Unfollow button logic here */}
+                             {/* TODO: Add Follow/Unfollow button logic here */}
                              <Button variant="outline" className="gap-2 rounded-full">
                                 Seguir
                             </Button>
