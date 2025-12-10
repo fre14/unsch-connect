@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from 'next/image';
@@ -11,11 +12,12 @@ import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useDoc, useMemoFirebase, useFirestore, useFirebase } from '@/firebase';
 import { collection, query, where, DocumentData, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, use } from 'react';
 import { getImageUrl } from '@/lib/placeholder-images';
 import { useRouter } from 'next/navigation';
 
-export default function OtherUserProfilePage({ params }: { params: { id: string } }) {
+export default function OtherUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
     const { user, isUserLoading: isAuthLoading } = useFirebase();
     const router = useRouter();
     const firestore = useFirestore();
@@ -24,18 +26,18 @@ export default function OtherUserProfilePage({ params }: { params: { id: string 
     
     // Redirect if the user is trying to view their own profile on this public page.
     useEffect(() => {
-        if (user && params.id === user.uid) {
+        if (user && id === user.uid) {
             router.replace('/home/profile');
         } else {
             setIsMyProfile(false);
         }
-    }, [user, params.id, router]);
+    }, [user, id, router]);
 
     // Data fetching for the profile being viewed
     const userProfileRef = useMemoFirebase(() => {
-        if (!firestore || !params.id) return null;
-        return doc(firestore, 'userProfiles', params.id);
-    }, [firestore, params.id]);
+        if (!firestore || !id) return null;
+        return doc(firestore, 'userProfiles', id);
+    }, [firestore, id]);
     
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<DocumentData>(userProfileRef);
     
@@ -90,9 +92,9 @@ export default function OtherUserProfilePage({ params }: { params: { id: string 
 
 
     const allPostsQuery = useMemoFirebase(() => {
-        if (!firestore || !params.id) return null;
-        return query(collection(firestore, 'posts'), where('authorId', '==', params.id));
-    }, [firestore, params.id]);
+        if (!firestore || !id) return null;
+        return query(collection(firestore, 'posts'), where('authorId', '==', id));
+    }, [firestore, id]);
 
     const { data: allUserActivity, isLoading: arePostsLoading } = useCollection<DocumentData>(allPostsQuery);
 
@@ -128,7 +130,7 @@ export default function OtherUserProfilePage({ params }: { params: { id: string 
 
     const isLoading = isAuthLoading || isProfileLoading;
     
-    if (isLoading || (user && params.id === user.uid)) {
+    if (isLoading || (user && id === user.uid)) {
          return (
              <div className="max-w-3xl mx-auto flex justify-center items-center h-full pt-20">
                 <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
