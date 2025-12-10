@@ -1,8 +1,7 @@
 
-
 'use client';
 
-import React, 'useEffect', useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -500,5 +499,7 @@ export function PostCard(props: PostProps) {
         </Card>
     );
 }
+
+    
 
     
