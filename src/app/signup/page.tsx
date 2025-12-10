@@ -119,7 +119,24 @@ export default function SignUpPage() {
   
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { roleType: 'student' },
+    defaultValues: {
+      roleType: 'student',
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      studentCode: '',
+      career: '',
+      teacherCode: '',
+      faculty: '',
+      academicDegree: '',
+      mainDepartment: '',
+      subDepartment: '',
+      specificArea: '',
+      verificationCode: '',
+      dni: '',
+    },
   });
 
   const roleType = form.watch('roleType');

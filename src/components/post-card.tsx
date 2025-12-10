@@ -21,7 +21,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Textarea } from './ui/textarea';
 import { formatPostTime } from '@/lib/utils';
 import Link from 'next/link';
-import { format, es } from 'date-fns';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 // Hook interno para obtener los datos del autor
 function useAuthorProfile(authorId: string | undefined) {
@@ -554,5 +555,7 @@ export function PostCard(props: PostProps) {
         </Card>
     );
 }
+
+    
 
     
